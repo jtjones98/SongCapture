@@ -25,6 +25,11 @@ final class AudioMatcherImpl: NSObject, AudioMatcher {
     private let audioEngine = AVAudioEngine()
     private var isListening = false
     
+    override init() {
+        super.init()
+        shazamSession.delegate = self
+    }
+    
     func start() async throws {
         // 1) Request Permission
         let granted = await requestMicPermissionsIfNeeded()
@@ -77,13 +82,16 @@ final class AudioMatcherImpl: NSObject, AudioMatcher {
     private func startAudioEngineAndStreamToShazam() throws {
         let inputNode = audioEngine.inputNode
         let inputFormat = inputNode.outputFormat(forBus: 0)
+        print("Input format:", inputFormat)
         
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, audioTime in
+            print("Recieved buffer with frameLength: \(buffer.frameLength)")
             self?.shazamSession.matchStreamingBuffer(buffer, at: audioTime)
         }
         
         audioEngine.prepare()
         try audioEngine.start()
+        print("Engine running:", audioEngine.isRunning)
     }
 }
     
@@ -111,3 +119,4 @@ extension AudioMatcherImpl: SHSessionDelegate {
         onNoMatch?()
     }
 }
+
