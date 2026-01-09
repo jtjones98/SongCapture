@@ -1,7 +1,7 @@
 # SongCapture (WIP)
 SongCapture is an iOS app for quickly saving songs, captured either from music playing nearby or from music app screenshots, and adding them to pre-selected playlists in one go.
 
-The goal of this project is both educational and functional - learning best modern iOS development practices and creating an app that helps bulk add songs from screenshots that are aquired from scrolling online to a music library. 
+The goal of this project is both educational and functional - learning best modern iOS development practices and creating an app that helps bulk add songs from screenshots that I aquire from scrolling online to my music library. 
 
 When completed, SongCapture will include the following features:
 - Identify songs playing nearby
