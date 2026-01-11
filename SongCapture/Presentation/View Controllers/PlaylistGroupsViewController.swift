@@ -41,8 +41,6 @@ final class PlaylistGroupsViewController: UIViewController {
         configureDataSource()
         
         viewModel.loadPlaylistGroups()
-        
-        print("navigationController:", navigationController)
     }
     
     private func configureViewModel() {
@@ -150,10 +148,16 @@ final class PlaylistGroupsViewController: UIViewController {
 // MARK: CollectionView Delegate
 
 extension PlaylistGroupsViewController: UICollectionViewDelegate {
-    // TODO: Navigate to page where users can add playlists to group
+    // TODO: Implement zoom style transition from cell to view controller
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        collectionView.deselectItem(at: indexPath, animated: true)
-        return
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
+        switch item {
+        case .item(_):
+            // TODO: Navigate to page where users can edit playlist groups (this might end up being the same vc as add)
+            break
+        case .add:
+            coordinator?.showAddGroup()
+        }
     }
 }
 

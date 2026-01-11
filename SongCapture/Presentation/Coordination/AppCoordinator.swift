@@ -12,6 +12,7 @@ protocol AddSongsCoordinating: AnyObject {
 }
 
 protocol PlaylistGroupsCoordinating: AnyObject {
+    func showAddGroup()
     func showEditGroup()
 }
 
@@ -83,7 +84,13 @@ extension AppCoordinator: AddSongsCoordinating {
 }
 
 extension AppCoordinator: PlaylistGroupsCoordinating {
+    func showAddGroup() {
+        let vm = NewGroupViewModel()
+        let vc = NewGroupViewController(with: vm, coordinator: self)
+        playlistGroupsNav.pushViewController(vc, animated: true)
+    }
+    
     func showEditGroup() {
-        // TODO: Navigation to edit group
+        // TODO: Navigate to edit group
     }
 }

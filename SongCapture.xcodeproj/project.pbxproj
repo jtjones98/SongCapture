@@ -39,6 +39,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				"Presentation/View Models/Untitled.swift",
 			);
 			target = AFAB51042F0DE60100406F7E /* SongCapture */;
 		};
