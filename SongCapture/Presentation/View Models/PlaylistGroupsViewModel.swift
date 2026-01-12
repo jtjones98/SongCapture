@@ -8,9 +8,7 @@
 import Foundation
 
 class PlaylistGroupsViewModel {
-    
-    private var matcher: AudioMatcher
-    
+        
     var onStateChange: ((PlaylistGroupsViewState) -> Void)?
     
     private var state: PlaylistGroupsViewState = .idle {
@@ -21,8 +19,7 @@ class PlaylistGroupsViewModel {
     
     private var items: [Item] = []
     
-    init(with matcher: AudioMatcher) {
-        self.matcher = matcher
+    init() {
     }
     
     func loadPlaylistGroups() {

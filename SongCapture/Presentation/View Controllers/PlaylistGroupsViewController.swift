@@ -18,9 +18,11 @@ final class PlaylistGroupsViewController: UIViewController {
     private var dataSource: DataSource!
     
     private var viewModel: PlaylistGroupsViewModel
+    private weak var coordinator: PlaylistGroupsCoordinating?
     
-    init(with viewModel: PlaylistGroupsViewModel) {
+    init(with viewModel: PlaylistGroupsViewModel, coordinator: PlaylistGroupsCoordinating) {
         self.viewModel = viewModel
+        self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
     }
     

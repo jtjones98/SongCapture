@@ -10,11 +10,13 @@ import UIKit
 class ListenViewController: UIViewController {
     
     private var viewModel: ListenViewModel
+    private weak var coordinator: AddSongsCoordinating?
 
     private let recordButton: UIButton = UIButton(type: .system)
     
-    init(with viewModel: ListenViewModel) {
+    init(with viewModel: ListenViewModel, coordinator: AddSongsCoordinating) {
         self.viewModel = viewModel
+        self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
     }
     
