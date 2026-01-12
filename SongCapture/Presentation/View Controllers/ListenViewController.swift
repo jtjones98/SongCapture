@@ -12,7 +12,7 @@ class ListenViewController: UIViewController {
     private var viewModel: ListenViewModel
     private weak var coordinator: AddSongsCoordinating?
 
-    private let recordButton: UIButton = UIButton(type: .system)
+    private var recordButton: UIButton!
     
     init(with viewModel: ListenViewModel, coordinator: AddSongsCoordinating) {
         self.viewModel = viewModel
@@ -67,17 +67,21 @@ class ListenViewController: UIViewController {
 
     private func setupUI() {
         view.backgroundColor = .systemBackground
+        recordButton = UIButton(type: .system)
 
-        let config = UIImage.SymbolConfiguration(pointSize: 36, weight: .bold)
-        let image = UIImage(systemName: "waveform.circle.fill", withConfiguration: config)
-        recordButton.setImage(image, for: .normal)
-        recordButton.tintColor = .white
-        recordButton.backgroundColor = .systemRed
+        var configuration = UIButton.Configuration.filled()
+        configuration.baseBackgroundColor = .systemRed
+        configuration.baseForegroundColor = .white
+        configuration.image = UIImage(systemName: "waveform.circle.fill")
+        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 36, weight: .bold)
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+        configuration.cornerStyle = .capsule
+        recordButton.configuration = configuration
+        
         recordButton.accessibilityLabel = "Record"
-        recordButton.accessibilityHint = "Double tap to start or stop recording"
+        recordButton.accessibilityHint = "Tap to start or stop recording"
 
         view.addSubview(recordButton)
-
         recordButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
@@ -113,7 +117,7 @@ class ListenViewController: UIViewController {
         pulse.repeatCount = .greatestFiniteMagnitude
         recordButton.layer.add(pulse, forKey: "pulse")
     }
-
+    
     private func stopPulsingRecordButton() {
         recordButton.layer.removeAnimation(forKey: "pulse")
         recordButton.layer.removeAllAnimations()
