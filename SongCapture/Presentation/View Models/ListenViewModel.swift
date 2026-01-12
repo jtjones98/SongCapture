@@ -52,36 +52,49 @@ final class ListenViewModel: NSObject {
         configureMatcher()
     }
     
+    @MainActor
     func listen() {
         switch state {
         case .listening:
             break
         case .idle, .listened, .failed:
-            state = .listening
+            self.state = .listening
+            
             listenTask?.cancel()
             listenTask = Task { [weak self] in
+                guard let self else { return }
                 do {
-                    try await self?.matcher.start()
+                    try await self.matcher.start()
                 } catch let error as MatcherError {
-                    switch error {
-                    case .permissionNotGranted:
-                        self?.state = .failed(.permissionNotGranted(title: "Permissions needed", message: "Please allow mic permissions in System Settings", settingsAction: "Open Settings", cancelAction: "Cancel"))
-                    default:
-                        self?.state = .failed(.engineError(message: "Please try again."))
+                    await MainActor.run {
+                        switch error {
+                        case .permissionNotGranted:
+                            self.state = .failed(.permissionNotGranted(title: "Permissions needed", message: "Please allow mic permissions in System Settings", settingsAction: "Open Settings", cancelAction: "Cancel"))
+                        default:
+                            self.state = .failed(.engineError(message: "Please try again."))
+                        }
                     }
                 } catch {
-                    self?.state = .failed(.engineError(message: "Please try again."))
+                    await MainActor.run {
+                        self.state = .failed(.engineError(message: "Please try again."))
+                    }
                 }
             }
         }
     }
     
     private func configureMatcher() {
-        self.matcher.onMatch = { [weak self] track in
-            self?.state = .listened(track)
+        matcher.onMatch = { [weak self] track in
+            guard let self else { return }
+            Task { @MainActor in
+                self.state = .listened(track)
+            }
         }
-        self.matcher.onNoMatch = { [weak self] in
-            self?.state = .failed(.noMatchFound(message: "No match found. Please try again."))
+        matcher.onNoMatch = { [weak self] in
+            guard let self else { return }
+            Task { @MainActor in
+                self.state = .failed(.noMatchFound(message: "No match found. Please try again."))
+            }
         }
     }
     
@@ -89,3 +102,4 @@ final class ListenViewModel: NSObject {
         listenTask?.cancel()
     }
 }
+

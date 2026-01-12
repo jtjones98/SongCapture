@@ -7,7 +7,7 @@
 
 import Foundation
 
-class PlaylistGroupsViewModel {
+final class PlaylistGroupsViewModel {
         
     var onStateChange: ((PlaylistGroupsViewState) -> Void)?
     
