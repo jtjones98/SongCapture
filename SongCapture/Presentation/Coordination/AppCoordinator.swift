@@ -15,6 +15,7 @@ protocol PlaylistGroupsCoordinating: AnyObject {
     func showEditGroup()
 }
 
+@MainActor
 final class AppCoordinator {
     
     private let window: UIWindow
