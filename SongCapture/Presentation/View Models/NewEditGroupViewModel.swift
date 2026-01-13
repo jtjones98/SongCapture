@@ -1,5 +1,5 @@
 //
-//  NewGroupViewModel.swift
+//  NewEditGroupViewModel.swift
 //  SongCapture
 //
 //  Created by John Jones on 1/11/26.
@@ -7,9 +7,10 @@
 
 import Foundation
 
-final class NewGroupViewModel {
+final class NewEditGroupViewModel {
+    private let store: PlaylistSelectionStore
     
-    private var services: [Service: ServiceState] = [:]
+    // private var services: [Service: ServiceState] = [:]
     
     private var state: ViewState = .idle {
         didSet {
@@ -20,14 +21,14 @@ final class NewGroupViewModel {
     var onStateChange: ((ViewState) -> Void)?
     
     // TODO: Initialize with an auth service
-    init() {
-        
+    init(with store: PlaylistSelectionStore) {
+        self.store = store
     }
     
     func getPlaylists() {
         var services: [Service: ServiceState] = [
             .appleMusic: ServiceState(
-                isAuthorized: false,
+                isAuthorized: true,
                 playlists: [
                     Playlist(id: UUID(), name: "Fall '24", thumbnailURL: "", service: .appleMusic),
                     Playlist(id: UUID(), name: "Jungle 2025", thumbnailURL: "", service: .appleMusic),
@@ -39,7 +40,7 @@ final class NewGroupViewModel {
                 ]
             ),
             .spotify: ServiceState(
-                isAuthorized: false,
+                isAuthorized: true,
                 playlists: [
                     Playlist(id: UUID(), name: "Fall '24", thumbnailURL: "", service: .spotify),
                     Playlist(id: UUID(), name: "Jungle 2025", thumbnailURL: "", service: .spotify),
@@ -59,7 +60,7 @@ final class NewGroupViewModel {
 
 // MARK: Helper
 
-private extension NewGroupViewModel {
+private extension NewEditGroupViewModel {
     func makeRenderModel(from services: [Service: ServiceState]) -> RenderModel {
         var sections: [Section] = []
         var itemsBySection: [Section: [Item]] = [:]
@@ -89,7 +90,7 @@ private extension NewGroupViewModel {
 
 // MARK: Types
 
-extension NewGroupViewModel {
+extension NewEditGroupViewModel {
     
     enum ViewState {
         case idle
@@ -103,6 +104,7 @@ extension NewGroupViewModel {
         let itemsBySection: [Section: [Item]]
     }
     
+    // TODO: Add a recent uploads section
     enum Section: Hashable {
         case service(Service)
         case grantAccess
@@ -131,7 +133,7 @@ extension NewGroupViewModel {
     }
 }
 
-extension NewGroupViewModel.Section {
+extension NewEditGroupViewModel.Section {
     var title: String {
         switch self {
         case .service(let service): service.title
@@ -146,10 +148,10 @@ extension NewGroupViewModel.Section {
         }
     }
     
-    var footerTitle: String { "See all" }
+    var footerTitle: String { "Add Playlists" }
 }
 
-extension NewGroupViewModel.Service {
+extension NewEditGroupViewModel.Service {
     var title: String {
         switch self {
         case .appleMusic: "Apple Music"

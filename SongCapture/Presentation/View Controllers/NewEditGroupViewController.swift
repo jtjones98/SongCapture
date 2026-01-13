@@ -1,5 +1,5 @@
 //
-//  NewGroupViewController.swift
+//  NewEditGroupViewController.swift
 //  SongCapture
 //
 //  Created by John Jones on 1/9/26.
@@ -7,22 +7,20 @@
 
 import UIKit
 
-fileprivate typealias Section = NewGroupViewModel.Section
-fileprivate typealias Item = NewGroupViewModel.Item
+fileprivate typealias Section = NewEditGroupViewModel.Section
+fileprivate typealias Item = NewEditGroupViewModel.Item
 fileprivate typealias DataSource = UITableViewDiffableDataSource<Section, Item>
 fileprivate typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
 
-class NewGroupViewController: UIViewController {
+class NewEditGroupViewController: UIViewController {
     
-    private var viewModel: NewGroupViewModel
+    private var viewModel: NewEditGroupViewModel
     private weak var coordinator: PlaylistGroupsCoordinating?
     
     private var tableView: UITableView!
     private var dataSource: DataSource!
-    private var appleMusicButton: UIButton!
-    private var spotifyButton: UIButton!
     
-    init(with viewModel: NewGroupViewModel, coordinator: PlaylistGroupsCoordinating) {
+    init(with viewModel: NewEditGroupViewModel, coordinator: PlaylistGroupsCoordinating) {
         self.viewModel = viewModel
         self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
@@ -106,7 +104,7 @@ class NewGroupViewController: UIViewController {
         }
     }
     
-    private func applySnapshot(render: NewGroupViewModel.RenderModel) {
+    private func applySnapshot(render: NewEditGroupViewModel.RenderModel) {
         var snapshot = Snapshot()
         snapshot.appendSections(render.sections)
         
@@ -117,9 +115,25 @@ class NewGroupViewController: UIViewController {
         
         dataSource.apply(snapshot, animatingDifferences: true)
     }
+    
+    @objc private func footerButtonTapped() {
+        goToNewScreen()
+    }
+
+    private func goToNewScreen() {
+        // Placeholder destination; replace with your actual view controller as needed
+        let vc = UIViewController()
+        vc.view.backgroundColor = .systemBackground
+        vc.title = "Next Screen"
+        if let navigationController = self.navigationController {
+            navigationController.pushViewController(vc, animated: true)
+        } else {
+            present(vc, animated: true)
+        }
+    }
 }
 
-extension NewGroupViewController: UITableViewDelegate {
+extension NewEditGroupViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let section = dataSource.snapshot().sectionIdentifiers[section]
         switch section {
@@ -143,20 +157,51 @@ extension NewGroupViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let section = dataSource.snapshot().sectionIdentifiers[section]
         switch section {
-        case .service:
-            let footer = UITableViewHeaderFooterView()
-            var config = footer.defaultContentConfiguration()
-            config.text = section.footerTitle
-            footer.contentConfiguration = config
-            return footer
+        case .service(let service):
+            return viewAllPlaylistsFooterView(service: service, title: section.footerTitle)
         default:
             return nil
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        let section = dataSource.snapshot().sectionIdentifiers[section]
+        switch section {
+        case .service(_):
+            return 56
+        default:
+            return 0.01
         }
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
     }
+    
+    private func viewAllPlaylistsFooterView(service: NewEditGroupViewModel.Service, title: String) -> UITableViewHeaderFooterView {
+        let footer = UITableViewHeaderFooterView()
+        let button = UIButton(type: .system)
+        
+        button.setTitle(title, for: .normal)
+        button.addAction(UIAction(handler: { [weak self] _ in
+            self?.viewAllPlaylistsTapped(service: service)
+        }), for: .touchUpInside)
+                
+        footer.contentView.addSubview(button)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            button.topAnchor.constraint(equalTo: footer.contentView.topAnchor, constant: 8),
+            button.leadingAnchor.constraint(equalTo: footer.contentView.leadingAnchor, constant: 16),
+            button.trailingAnchor.constraint(equalTo: footer.contentView.trailingAnchor, constant: -16),
+            button.bottomAnchor.constraint(equalTo: footer.contentView.bottomAnchor, constant: -8)
+        ])
+        
+        return footer
+    }
+    
+    private func viewAllPlaylistsTapped(service: NewEditGroupViewModel.Service) {
+        coordinator?.showPlaylists()
+    }
 }
-
 

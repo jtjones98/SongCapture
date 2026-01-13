@@ -156,7 +156,7 @@ extension PlaylistGroupsViewController: UICollectionViewDelegate {
             // TODO: Navigate to page where users can edit playlist groups (this might end up being the same vc as add)
             break
         case .add:
-            coordinator?.showAddGroup()
+            coordinator?.showNewEditGroup()
         }
     }
 }

@@ -7,7 +7,9 @@
 
 final class PlaylistsViewModel {
     
-    init() {
-        
+    private let store: PlaylistSelectionStore
+    
+    init(with store: PlaylistSelectionStore) {
+        self.store = store
     }
 }

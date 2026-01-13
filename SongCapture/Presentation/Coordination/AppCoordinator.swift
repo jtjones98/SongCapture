@@ -12,8 +12,8 @@ protocol AddSongsCoordinating: AnyObject {
 }
 
 protocol PlaylistGroupsCoordinating: AnyObject {
-    func showAddGroup()
-    func showEditGroup()
+    func showNewEditGroup()
+    func showPlaylists()
 }
 
 @MainActor
@@ -28,6 +28,7 @@ final class AppCoordinator {
     private let playlistGroupsNav = UINavigationController()
     
     private let audioMatcher: AudioMatcher = AudioMatcherImpl()
+    private let playlistSelectionStore: PlaylistSelectionStore = PlaylistSelectionStoreImpl()
     
     init(window: UIWindow) {
         self.window = window
@@ -47,8 +48,7 @@ final class AppCoordinator {
         window.makeKeyAndVisible()
     }
     
-    // MARK: Tab set up
-    
+    // MARK: Tabs setup
     private func setupUploadTab() {
         let vm = UploadViewModel(with: audioMatcher)
         let vc = UploadViewController(with: vm, coordinator: self)
@@ -77,20 +77,24 @@ final class AppCoordinator {
     }
 }
 
+// MARK: Add Songs Coordinating
 extension AppCoordinator: AddSongsCoordinating {
     func showPlaylistGroups() {
         // TODO: Navigate to playlist groups
     }
 }
 
+// MARK: Playlist Groups Coordinating
 extension AppCoordinator: PlaylistGroupsCoordinating {
-    func showAddGroup() {
-        let vm = NewGroupViewModel()
-        let vc = NewGroupViewController(with: vm, coordinator: self)
+    func showNewEditGroup() {
+        let vm = NewEditGroupViewModel(with: playlistSelectionStore)
+        let vc = NewEditGroupViewController(with: vm, coordinator: self)
         playlistGroupsNav.pushViewController(vc, animated: true)
     }
     
-    func showEditGroup() {
-        // TODO: Navigate to edit group
+    func showPlaylists() {
+        let vm = PlaylistsViewModel(with: playlistSelectionStore)
+        let vc = PlaylistsViewController(with: vm, coordinator: self)
+        playlistGroupsNav.pushViewController(vc, animated: true)
     }
 }

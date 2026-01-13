@@ -19,9 +19,6 @@ final class PlaylistGroupsViewModel {
     
     private var items: [Item] = []
     
-    init() {
-    }
-    
     func loadPlaylistGroups() {
         state = .loading
         
