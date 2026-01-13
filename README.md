@@ -41,6 +41,13 @@ Core logic and architecture are written by hand. There is no blind copy-paste AI
 
 This project uses machine learning only through Apple-provided, on-device frameworks (Vision and ShazamKit). No custom models are trained or deployed.
 
+## Current Work
+### Playlist Groups
+![PlaylistGroupsFlow](https://github.com/user-attachments/assets/5a6c7503-bdf1-4cac-a5d7-ea17b1c1496c)
+- User should be able to create a new playlist group, connect to Apple Music and/or Spotify, and add playlists from either service to group. 
+
+
+
 
 
 
