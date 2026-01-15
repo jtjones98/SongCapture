@@ -219,7 +219,7 @@ extension NewEditGroupViewController: UITableViewDelegate {
         }
     }
     
-    private func viewAllPlaylistsFooterView(service: NewEditGroupViewModel.Service, title: String) -> UITableViewHeaderFooterView {
+    private func viewAllPlaylistsFooterView(service: Service, title: String) -> UITableViewHeaderFooterView {
         let footer = UITableViewHeaderFooterView()
         let button = UIButton(type: .system)
         
@@ -241,7 +241,7 @@ extension NewEditGroupViewController: UITableViewDelegate {
         return footer
     }
     
-    private func viewAllPlaylistsTapped(service: NewEditGroupViewModel.Service) {
+    private func viewAllPlaylistsTapped(service: Service) {
         coordinator?.showPlaylists()
     }
 }

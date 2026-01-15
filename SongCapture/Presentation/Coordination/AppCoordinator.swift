@@ -28,9 +28,12 @@ final class AppCoordinator {
     private let playlistsAndGroupsNav = UINavigationController()
     // TODO: Maybe a barcode scanning screen?
     
+    private let networkClient: NetworkClient = NetworkClientImpl()
+    private lazy var repository: Repository = RepositoryImpl(networkClient: networkClient)
     private let audioMatcher: AudioMatcher = AudioMatcherImpl()
     private let playlistSelectionStore: PlaylistSelectionStore = PlaylistSelectionStoreImpl()
     private let authService: AuthService = AuthServiceImpl()
+    
     
     init(window: UIWindow) {
         self.window = window
@@ -70,7 +73,7 @@ final class AppCoordinator {
     }
     
     private func setupPlaylistsAndGroupsTab() {
-        let vm = PlaylistsAndGroupsViewModel()
+        let vm = PlaylistsAndGroupsViewModel(repository: repository)
         let vc = PlaylistsAndGroupsViewController(with: vm, coordinator: self)
         vc.title = "Playlists & Groups"
         vc.tabBarItem = UITabBarItem(title: "Playlists & Groups", image: UIImage(systemName: "rectangle.3.group"), tag: 2)
@@ -89,7 +92,7 @@ extension AppCoordinator: AddSongsCoordinating {
 // MARK: Playlist and Groups Coordinating
 extension AppCoordinator: PlaylistsAndGroupsCoordinating {
     func showNewEditGroup() {
-        let vm = NewEditGroupViewModel(with: playlistSelectionStore, authService: authService)
+        let vm = NewEditGroupViewModel(repository: repository, authService: authService, selectionStore: playlistSelectionStore)
         let vc = NewEditGroupViewController(with: vm, coordinator: self)
         vc.title = "New Group"
 
@@ -107,7 +110,7 @@ extension AppCoordinator: PlaylistsAndGroupsCoordinating {
     }
     
     func showPlaylists() {
-        let vm = AddPlaylistsViewModel(with: playlistSelectionStore)
+        let vm = AddPlaylistsViewModel(repository: repository, selectionStore: playlistSelectionStore)
         let vc = AddPlaylistsViewController(with: vm, coordinator: self)
         vc.title = "Playlists"
         playlistsAndGroupsNav.pushViewController(vc, animated: true)

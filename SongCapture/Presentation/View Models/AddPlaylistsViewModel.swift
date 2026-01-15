@@ -7,9 +7,11 @@
 
 final class AddPlaylistsViewModel {
     
-    private let store: PlaylistSelectionStore
+    private let repository: Repository
+    private let selectionStore: PlaylistSelectionStore
     
-    init(with store: PlaylistSelectionStore) {
-        self.store = store
+    init(repository: Repository, selectionStore: PlaylistSelectionStore) {
+        self.repository = repository
+        self.selectionStore = selectionStore
     }
 }

@@ -9,8 +9,9 @@ import Foundation
 import MusicKit
 
 final class NewEditGroupViewModel {
-    private let store: PlaylistSelectionStore
+    private let repository: Repository
     private let authService: AuthService
+    private let selectionStore: PlaylistSelectionStore
     
     private var services: [Service: ServiceState] = [:]
     
@@ -25,9 +26,14 @@ final class NewEditGroupViewModel {
     private var requestAuthorizationTask: Task<Void, Never>?
     
     // TODO: Initialize with an auth service
-    init(with store: PlaylistSelectionStore, authService: AuthService) {
-        self.store = store
+    init(repository: Repository, authService: AuthService, selectionStore: PlaylistSelectionStore) {
+        self.repository = repository
         self.authService = authService
+        self.selectionStore = selectionStore
+    }
+    
+    func getGroupPlaylists() {
+        
     }
     
     func getPlaylists() {
@@ -160,7 +166,7 @@ extension NewEditGroupViewModel {
         let itemsBySection: [Section: [Item]]
     }
     
-    // TODO: Add a recent uploads section
+    // TODO: Add a recent uploads section?
     enum Section: Hashable {
         case service(Service)
         case grantAccess
@@ -170,18 +176,6 @@ extension NewEditGroupViewModel {
         case empty
         case playlist(Playlist)
         case grantAccess(Service)
-    }
-    
-    enum Service: Hashable {
-        case appleMusic
-        case spotify
-    }
-    
-    struct Playlist: Hashable, Equatable {
-        let id: UUID
-        let name: String
-        let thumbnailURL: String
-        let service: Service
     }
     
     struct ServiceState {
@@ -206,20 +200,4 @@ extension NewEditGroupViewModel.Section {
     }
     
     var footerTitle: String { "Add Playlists" }
-}
-
-extension NewEditGroupViewModel.Service {
-    var title: String {
-        switch self {
-        case .appleMusic: "Apple Music"
-        case .spotify: "Spotify"
-        }
-    }
-    
-    var imageName: String {
-        switch self {
-        case .appleMusic: "apple_music_logo"
-        case .spotify: "spotify_logo"
-        }
-    }
 }

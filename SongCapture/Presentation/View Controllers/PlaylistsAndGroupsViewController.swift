@@ -209,7 +209,7 @@ extension PlaylistsAndGroupsViewController: UICollectionViewDelegate {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
         switch item {
         case .playlist(let playlist):
-            // TODO: idk, maybe lets do nothing
+            // TODO: lets navigate to a page where we can see previous uploads
             break
         case .group(let group):
             // TODO: Navigate to page where users can edit playlist groups (this might end up being the same vc as add)

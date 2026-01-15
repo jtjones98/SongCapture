@@ -8,6 +8,8 @@
 import Foundation
 
 final class PlaylistsAndGroupsViewModel {
+    
+    private let repository: Repository
         
     var onStateChange: ((PlaylistsAndGroupsViewState) -> Void)?
     
@@ -15,6 +17,10 @@ final class PlaylistsAndGroupsViewModel {
         didSet {
             onStateChange?(state)
         }
+    }
+    
+    init(repository: Repository) {
+        self.repository = repository
     }
     
     private var items: [Item] = []
