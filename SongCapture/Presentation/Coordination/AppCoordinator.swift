@@ -8,10 +8,10 @@
 import UIKit
 
 protocol AddSongsCoordinating: AnyObject {
-    func showPlaylistGroups()
+    func showPlaylistsAndGroups()
 }
 
-protocol PlaylistGroupsCoordinating: AnyObject {
+protocol PlaylistsAndGroupsCoordinating: AnyObject {
     func showNewEditGroup()
     func showPlaylists()
 }
@@ -25,10 +25,12 @@ final class AppCoordinator {
     
     private let uploadNav = UINavigationController()
     private let listenNav = UINavigationController()
-    private let playlistGroupsNav = UINavigationController()
+    private let playlistsAndGroupsNav = UINavigationController()
+    // TODO: Maybe a barcode scanning screen?
     
     private let audioMatcher: AudioMatcher = AudioMatcherImpl()
     private let playlistSelectionStore: PlaylistSelectionStore = PlaylistSelectionStoreImpl()
+    private let authService: AuthService = AuthServiceImpl()
     
     init(window: UIWindow) {
         self.window = window
@@ -37,12 +39,12 @@ final class AppCoordinator {
     func start() {
         setupUploadTab()
         setupListenTab()
-        setupPlaylistGroupsTab()
+        setupPlaylistsAndGroupsTab()
         
-        tabBarController.setViewControllers([uploadNav, listenNav, playlistGroupsNav], animated: false)
+        tabBarController.setViewControllers([uploadNav, listenNav, playlistsAndGroupsNav], animated: false)
         tabBarController.selectedIndex = 0
         
-        [uploadNav, listenNav, playlistGroupsNav].forEach { $0.navigationBar.prefersLargeTitles = true }
+        [uploadNav, listenNav, playlistsAndGroupsNav].forEach { $0.navigationBar.prefersLargeTitles = true }
         
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
@@ -67,34 +69,48 @@ final class AppCoordinator {
         listenNav.setViewControllers([vc], animated: false)
     }
     
-    private func setupPlaylistGroupsTab() {
-        let vm = PlaylistGroupsViewModel()
-        let vc = PlaylistGroupsViewController(with: vm, coordinator: self)
-        vc.title = "Playlist Groups"
-        vc.tabBarItem = UITabBarItem(title: "Playlist Groups", image: UIImage(systemName: "rectangle.3.group"), tag: 2)
+    private func setupPlaylistsAndGroupsTab() {
+        let vm = PlaylistsAndGroupsViewModel()
+        let vc = PlaylistsAndGroupsViewController(with: vm, coordinator: self)
+        vc.title = "Playlists & Groups"
+        vc.tabBarItem = UITabBarItem(title: "Playlists & Groups", image: UIImage(systemName: "rectangle.3.group"), tag: 2)
         
-        playlistGroupsNav.setViewControllers([vc], animated: false)
+        playlistsAndGroupsNav.setViewControllers([vc], animated: false)
     }
 }
 
 // MARK: Add Songs Coordinating
 extension AppCoordinator: AddSongsCoordinating {
-    func showPlaylistGroups() {
-        // TODO: Navigate to playlist groups
+    func showPlaylistsAndGroups() {
+        // TODO: Navigate to playlists and groups
     }
 }
 
-// MARK: Playlist Groups Coordinating
-extension AppCoordinator: PlaylistGroupsCoordinating {
+// MARK: Playlist and Groups Coordinating
+extension AppCoordinator: PlaylistsAndGroupsCoordinating {
     func showNewEditGroup() {
-        let vm = NewEditGroupViewModel(with: playlistSelectionStore)
+        let vm = NewEditGroupViewModel(with: playlistSelectionStore, authService: authService)
         let vc = NewEditGroupViewController(with: vm, coordinator: self)
-        playlistGroupsNav.pushViewController(vc, animated: true)
+        vc.title = "New Group"
+
+        let nav = UINavigationController(rootViewController: vc)
+        nav.modalPresentationStyle = .formSheet
+
+        if let sheet = nav.sheetPresentationController {
+            sheet.detents = [.large()]
+            sheet.prefersGrabberVisible = true
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            sheet.selectedDetentIdentifier = .medium
+        }
+
+        playlistsAndGroupsNav.present(nav, animated: true)
     }
     
     func showPlaylists() {
-        let vm = PlaylistsViewModel(with: playlistSelectionStore)
-        let vc = PlaylistsViewController(with: vm, coordinator: self)
-        playlistGroupsNav.pushViewController(vc, animated: true)
+        let vm = AddPlaylistsViewModel(with: playlistSelectionStore)
+        let vc = AddPlaylistsViewController(with: vm, coordinator: self)
+        vc.title = "Playlists"
+        playlistsAndGroupsNav.pushViewController(vc, animated: true)
     }
 }
+

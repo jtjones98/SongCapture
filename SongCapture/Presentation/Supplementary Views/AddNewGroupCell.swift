@@ -6,6 +6,7 @@
 //
 
 import UIKit
+// TODO: Get rid of this, combine this with AddNewFooterView
 
 final class AddNewGroupCell: UICollectionViewCell {
     static let reuseIdentifier = "AddNewGroupCell"

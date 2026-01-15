@@ -15,12 +15,12 @@ fileprivate typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
 class NewEditGroupViewController: UIViewController {
     
     private var viewModel: NewEditGroupViewModel
-    private weak var coordinator: PlaylistGroupsCoordinating?
+    private weak var coordinator: PlaylistsAndGroupsCoordinating?
     
     private var tableView: UITableView!
     private var dataSource: DataSource!
     
-    init(with viewModel: NewEditGroupViewModel, coordinator: PlaylistGroupsCoordinating) {
+    init(with viewModel: NewEditGroupViewModel, coordinator: PlaylistsAndGroupsCoordinating) {
         self.viewModel = viewModel
         self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
@@ -34,13 +34,18 @@ class NewEditGroupViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         
-        navigationItem.title = "New Group"
-        
+        navigationItem.largeTitleDisplayMode = .always
+                
         configureViewModel()
         configureTableView()
         configureDataSource()
         
         viewModel.getPlaylists()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        print("willAppear title:", navigationItem.title as Any, "titleView:", navigationItem.titleView as Any)
     }
     
     private func configureViewModel() {
@@ -54,9 +59,11 @@ class NewEditGroupViewController: UIViewController {
             case .loaded(let renderModel):
                 // TODO: handle dictionary or something
                 self?.applySnapshot(render: renderModel)
-            case .error(let message):
-                // TODO: handle error
-                break
+            case .error(let error):
+                switch error {
+                case .authFailure(let title, let body, let action):
+                    self?.presentAuthFailureAlert(title: title, message: body, actionTitle: action)
+                }
             }
         }
     }
@@ -73,15 +80,15 @@ class NewEditGroupViewController: UIViewController {
         // Register cell and section header
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         tableView.register(ConnectServiceCell.self, forCellReuseIdentifier: ConnectServiceCell.reuseIdentifier)
+        tableView.register(EmptyPlaylistsCell.self, forCellReuseIdentifier: EmptyPlaylistsCell.reuseIdentifier)
         
         view.addSubview(tableView)
         
-        let guide = view.safeAreaLayoutGuide
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: guide.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: guide.bottomAnchor)
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
     
@@ -100,6 +107,8 @@ class NewEditGroupViewController: UIViewController {
                 }
                 cell.configure(title: service.title, image: UIImage(named: service.imageName))
                 return cell
+            case .empty:
+                return tableView.dequeueReusableCell(withIdentifier: EmptyPlaylistsCell.reuseIdentifier, for: indexPath) as? EmptyPlaylistsCell
             }
         }
     }
@@ -113,7 +122,18 @@ class NewEditGroupViewController: UIViewController {
             snapshot.appendItems(items, toSection: section)
         }
         
-        dataSource.apply(snapshot, animatingDifferences: true)
+        // If the section structure changed, reload instead of animating.
+        let oldSections = dataSource.snapshot().sectionIdentifiers
+        let newSections = snapshot.sectionIdentifiers
+        let sectionStructureChanged = oldSections != newSections
+
+        if sectionStructureChanged {
+            dataSource.applySnapshotUsingReloadData(snapshot)
+        } else {
+            dataSource.apply(snapshot, animatingDifferences: true)
+        }
+        
+        //dataSource.apply(snapshot, animatingDifferences: true)
     }
     
     @objc private func footerButtonTapped() {
@@ -131,9 +151,26 @@ class NewEditGroupViewController: UIViewController {
             present(vc, animated: true)
         }
     }
+    
+    private func presentAuthFailureAlert(title: String, message: String, actionTitle: String?) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        if let actionTitle, !actionTitle.isEmpty {
+            let settingsAction = UIAlertAction(title: actionTitle, style: .default) { _ in
+                guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                if UIApplication.shared.canOpenURL(url) {
+                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                }
+            }
+            alert.addAction(settingsAction)
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alert.addAction(cancelAction)
+        present(alert, animated: true)
+    }
 }
 
 extension NewEditGroupViewController: UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let section = dataSource.snapshot().sectionIdentifiers[section]
         switch section {
@@ -175,7 +212,11 @@ extension NewEditGroupViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
+        tableView.deselectRow(at: indexPath, animated: false)
+        let item = dataSource.itemIdentifier(for: indexPath)
+        if case .grantAccess(let service) = item {
+            viewModel.requestMusicAuthorization(for: service)
+        }
     }
     
     private func viewAllPlaylistsFooterView(service: NewEditGroupViewModel.Service, title: String) -> UITableViewHeaderFooterView {

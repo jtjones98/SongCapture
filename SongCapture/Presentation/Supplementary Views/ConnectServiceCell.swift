@@ -19,8 +19,7 @@ final class ConnectServiceCell: UITableViewCell {
     }
 
     required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setup()
+        fatalError("From coder not implemented")
     }
 
     private func setup() {
@@ -51,5 +50,9 @@ final class ConnectServiceCell: UITableViewCell {
         config.imageProperties.preferredSymbolConfiguration = .init(pointSize: 48, weight: .regular)
         config.textProperties.font = .preferredFont(forTextStyle: .headline)
         contentConfiguration = config
+    }
+    
+    override func prepareForReuse() {
+        contentConfiguration = nil
     }
 }

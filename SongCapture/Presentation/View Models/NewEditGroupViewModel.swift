@@ -6,11 +6,13 @@
 //
 
 import Foundation
+import MusicKit
 
 final class NewEditGroupViewModel {
     private let store: PlaylistSelectionStore
+    private let authService: AuthService
     
-    // private var services: [Service: ServiceState] = [:]
+    private var services: [Service: ServiceState] = [:]
     
     private var state: ViewState = .idle {
         didSet {
@@ -20,27 +22,30 @@ final class NewEditGroupViewModel {
     
     var onStateChange: ((ViewState) -> Void)?
     
+    private var requestAuthorizationTask: Task<Void, Never>?
+    
     // TODO: Initialize with an auth service
-    init(with store: PlaylistSelectionStore) {
+    init(with store: PlaylistSelectionStore, authService: AuthService) {
         self.store = store
+        self.authService = authService
     }
     
     func getPlaylists() {
         var services: [Service: ServiceState] = [
             .appleMusic: ServiceState(
-                isAuthorized: true,
+                isAuthorized: false,
                 playlists: [
-                    Playlist(id: UUID(), name: "Fall '24", thumbnailURL: "", service: .appleMusic),
-                    Playlist(id: UUID(), name: "Jungle 2025", thumbnailURL: "", service: .appleMusic),
-                    Playlist(id: UUID(), name: "Chill", thumbnailURL: "", service: .appleMusic),
-                    Playlist(id: UUID(), name: "Winter '26", thumbnailURL: "", service: .appleMusic),
-                    Playlist(id: UUID(), name: "Ambient for s+t+j", thumbnailURL: "", service: .appleMusic),
-                    Playlist(id: UUID(), name: "Jungle 2026", thumbnailURL: "", service: .appleMusic),
-                    Playlist(id: UUID(), name: "Rest", thumbnailURL: "", service: .appleMusic)
+//                    Playlist(id: UUID(), name: "Fall '24", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: UUID(), name: "Jungle 2025", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: UUID(), name: "Chill", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: UUID(), name: "Winter '26", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: UUID(), name: "Ambient for s+t+j", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: UUID(), name: "Jungle 2026", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: UUID(), name: "Rest", thumbnailURL: "", service: .appleMusic)
                 ]
             ),
             .spotify: ServiceState(
-                isAuthorized: true,
+                isAuthorized: false,
                 playlists: [
                     Playlist(id: UUID(), name: "Fall '24", thumbnailURL: "", service: .spotify),
                     Playlist(id: UUID(), name: "Jungle 2025", thumbnailURL: "", service: .spotify),
@@ -53,8 +58,49 @@ final class NewEditGroupViewModel {
             )
         ]
         
-        var renderModel = makeRenderModel(from: services)
+        self.services = services
+        let renderModel = makeRenderModel(from: services)
         state = .loaded(renderModel)
+    }
+    
+    func requestMusicAuthorization(for service: Service) {
+        requestAuthorizationTask?.cancel()
+        
+        switch service {
+        case .appleMusic:
+            requestAuthorizationTask = Task {
+                do {
+                    try await authService.requestAppleMusicAuthorization()
+                    services[.appleMusic]?.isAuthorized = true
+                    await MainActor.run {
+                        state = .loaded(makeRenderModel(from: self.services))
+                    }
+                } catch let AuthError {
+                    // TODO: Add an AppLogger to log errors
+                    await MainActor.run {
+                        state = .error(.authFailure(title: "Authorization", body: "SongCapture needs Music access to access your music library", action: "Open Settings"))
+                    }
+                }
+            }
+        case .spotify:
+            requestAuthorizationTask = Task {
+                do {
+                    try await authService.requestSpotifyAuthorization()
+                    services[.spotify]?.isAuthorized = true
+                    await MainActor.run {
+                        state = .loaded(makeRenderModel(from: self.services))
+                    }
+                } catch {
+                    await MainActor.run {
+                        state = .error(.authFailure(title: "Authorization", body: "SongCapture needs Spotify access to access your music library", action: nil))
+                    }
+                }
+            }
+        }
+    }
+    
+    deinit {
+        requestAuthorizationTask?.cancel()
     }
 }
 
@@ -70,7 +116,11 @@ private extension NewEditGroupViewModel {
             if state.isAuthorized {
                 let section: Section = .service(service)
                 sections.append(section)
-                itemsBySection[section] = state.playlists.map { .playlist($0) }
+                if (!state.playlists.isEmpty) {
+                    itemsBySection[section] = state.playlists.map { .playlist($0) }
+                } else {
+                    itemsBySection[section] = [.empty]
+                }
             }
         }
         
@@ -91,12 +141,18 @@ private extension NewEditGroupViewModel {
 // MARK: Types
 
 extension NewEditGroupViewModel {
+    enum NewEditGroupError: LocalizedError {
+        case authFailure(title: String, body: String, action: String?)
+    }
+}
+
+extension NewEditGroupViewModel {
     
     enum ViewState {
         case idle
         case loading
         case loaded(RenderModel)
-        case error(String)
+        case error(NewEditGroupError)
     }
     
     struct RenderModel {
@@ -111,6 +167,7 @@ extension NewEditGroupViewModel {
     }
     
     enum Item: Hashable {
+        case empty
         case playlist(Playlist)
         case grantAccess(Service)
     }

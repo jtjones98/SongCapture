@@ -1,5 +1,5 @@
 //
-//  PlaylistsViewController.swift
+//  AddPlaylistsViewController.swift
 //  SongCapture
 //
 //  Created by John Jones on 1/12/26.
@@ -7,12 +7,12 @@
 
 import UIKit
 
-class PlaylistsViewController: UIViewController {
+class AddPlaylistsViewController: UIViewController {
     
-    private let viewModel: PlaylistsViewModel
-    private weak var coordinator: PlaylistGroupsCoordinating?
+    private let viewModel: AddPlaylistsViewModel
+    private weak var coordinator: PlaylistsAndGroupsCoordinating?
     
-    init(with viewModel: PlaylistsViewModel, coordinator: PlaylistGroupsCoordinating) {
+    init(with viewModel: AddPlaylistsViewModel, coordinator: PlaylistsAndGroupsCoordinating) {
         self.viewModel = viewModel
         self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
