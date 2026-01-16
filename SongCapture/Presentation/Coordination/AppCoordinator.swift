@@ -13,7 +13,7 @@ protocol AddSongsCoordinating: AnyObject {
 
 protocol PlaylistsAndGroupsCoordinating: AnyObject {
     func showNewEditGroup()
-    func showPlaylists()
+    func showPlaylists(service: Service)
 }
 
 @MainActor
@@ -26,6 +26,7 @@ final class AppCoordinator {
     private let uploadNav = UINavigationController()
     private let listenNav = UINavigationController()
     private let playlistsAndGroupsNav = UINavigationController()
+    private let newEditNav = UINavigationController()
     // TODO: Maybe a barcode scanning screen?
     
     private let networkClient: NetworkClient = NetworkClientImpl()
@@ -95,25 +96,25 @@ extension AppCoordinator: PlaylistsAndGroupsCoordinating {
         let vm = NewEditGroupViewModel(repository: repository, authService: authService, selectionStore: playlistSelectionStore)
         let vc = NewEditGroupViewController(with: vm, coordinator: self)
         vc.title = "New Group"
+        
+        newEditNav.setViewControllers([vc], animated: true)
+        newEditNav.modalPresentationStyle = .formSheet
 
-        let nav = UINavigationController(rootViewController: vc)
-        nav.modalPresentationStyle = .formSheet
-
-        if let sheet = nav.sheetPresentationController {
+        if let sheet = newEditNav.sheetPresentationController {
             sheet.detents = [.large()]
             sheet.prefersGrabberVisible = true
             sheet.prefersScrollingExpandsWhenScrolledToEdge = true
             sheet.selectedDetentIdentifier = .medium
         }
 
-        playlistsAndGroupsNav.present(nav, animated: true)
+        playlistsAndGroupsNav.present(newEditNav, animated: true)
     }
     
-    func showPlaylists() {
-        let vm = AddPlaylistsViewModel(repository: repository, selectionStore: playlistSelectionStore)
+    func showPlaylists(service: Service) {
+        let vm = AddPlaylistsViewModel(service: service, repository: repository, selectionStore: playlistSelectionStore)
         let vc = AddPlaylistsViewController(with: vm, coordinator: self)
         vc.title = "Playlists"
-        playlistsAndGroupsNav.pushViewController(vc, animated: true)
+        newEditNav.pushViewController(vc, animated: true)
     }
 }
 

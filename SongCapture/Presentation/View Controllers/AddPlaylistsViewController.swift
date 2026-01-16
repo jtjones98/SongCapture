@@ -7,10 +7,21 @@
 
 import UIKit
 
+fileprivate typealias Section = AddPlaylistsViewModel.Section
+fileprivate typealias Item = AddPlaylistsViewModel.Item
+fileprivate typealias DataSource = UITableViewDiffableDataSource<Section, Item>
+fileprivate typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
+fileprivate typealias RenderModel = AddPlaylistsViewModel.RenderModel
+
 class AddPlaylistsViewController: UIViewController {
     
     private let viewModel: AddPlaylistsViewModel
     private weak var coordinator: PlaylistsAndGroupsCoordinating?
+    
+    private var tableView: UITableView!
+    private var dataSource: DataSource!
+    
+    private var renderModel: RenderModel?
     
     init(with viewModel: AddPlaylistsViewModel, coordinator: PlaylistsAndGroupsCoordinating) {
         self.viewModel = viewModel
@@ -24,5 +35,78 @@ class AddPlaylistsViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        
+        configureViewModel()
+        configureTableView()
+        configureDataSource()
+    }
+    
+    private func configureViewModel() {
+        viewModel.onStateChange = { [weak self] state in
+            switch state {
+            case .idle:
+                break
+            case .loading:
+                // TODO: Loading spinner
+                break
+            case .loaded(let renderModel):
+                self?.applySnapshot(renderModel: renderModel)
+            case .error:
+                // TODO: Show some UI
+                break
+            }
+        }
+    }
+    
+    private func configureTableView() {
+        tableView = UITableView(frame: .zero, style: .insetGrouped)
+        tableView.backgroundColor = .clear
+        
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+        
+        view.addSubview(tableView)
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
+    private func configureDataSource() {
+        dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+            switch item {
+            case .playlist(let id):
+                if let playlist = self.renderModel?.rowsByID[id] {
+                    var config = PlaylistRowConfiguration(title: playlist.title, subtitle: playlist.subtitle, image: nil)
+                    cell.contentConfiguration = config
+                }
+                return cell
+            }
+        }
+    }
+    
+    private func applySnapshot(renderModel newRender: RenderModel) {
+        // Update the stored render model reference first so state is consistent
+        let oldRender = self.renderModel
+        self.renderModel = newRender
+
+        // If we have an old render and the items are identical, just reconfigure
+        if let oldRender = oldRender, oldRender.items == newRender.items {
+            var snapshot = dataSource.snapshot()
+            snapshot.reconfigureItems(newRender.items)
+            dataSource.apply(snapshot, animatingDifferences: true)
+            return
+        }
+
+        // Otherwise, build a fresh snapshot and apply
+        var snapshot = Snapshot()
+        snapshot.appendSections([.main])
+        snapshot.appendItems(newRender.items)
+        dataSource.apply(snapshot, animatingDifferences: false)
     }
 }
+

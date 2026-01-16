@@ -242,7 +242,7 @@ extension NewEditGroupViewController: UITableViewDelegate {
     }
     
     private func viewAllPlaylistsTapped(service: Service) {
-        coordinator?.showPlaylists()
+        coordinator?.showPlaylists(service: service)
     }
 }
 

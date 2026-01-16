@@ -13,17 +13,21 @@ enum Service: Hashable {
 }
 
 struct Playlist: Hashable, Equatable {
-    let id: UUID
+    let id: PlaylistID
     let name: String
     let thumbnailURL: String
     let service: Service
 }
 
 struct PlaylistGroup: Hashable, Equatable {
-    let id: UUID
+    let id: PlaylistGroupID
     let name: String
     let playlists: [Playlist]
 }
+
+struct PlaylistID: Hashable { let id: UUID }
+
+struct PlaylistGroupID: Hashable { let id: UUID }
 
 struct Track: Hashable {
     let title: String

@@ -8,14 +8,13 @@
 import UIKit
 
 protocol PlaylistSelectionStore {
-    func addObserver(_ handler: @escaping (Set<UUID>) -> Void) -> UUID
+    func addObserver(_ handler: @escaping (Set<PlaylistID>) -> Void) -> UUID
     func removeObserver(_ id: UUID)
+    func toggle(_ id: PlaylistID)
 }
 
 final class PlaylistSelectionStoreImpl: PlaylistSelectionStore {
-    
-    typealias PlaylistID = UUID
-    
+        
     // TODO: Look into Combine alternative
     private var observers: [UUID: (Set<PlaylistID>) -> Void] = [:] {
         didSet {
@@ -29,14 +28,14 @@ final class PlaylistSelectionStoreImpl: PlaylistSelectionStore {
         }
     }
     
-    func addObserver(_ handler: @escaping (Set<PlaylistID>) -> Void) -> PlaylistID {
-        let id = PlaylistID()
+    func addObserver(_ handler: @escaping (Set<PlaylistID>) -> Void) -> UUID {
+        let id = UUID()
         observers[id] = handler
         handler(selectedIDs)
         return id
     }
     
-    func removeObserver(_ id: PlaylistID) {
+    func removeObserver(_ id: UUID) {
         observers[id] = nil
     }
     
@@ -46,15 +45,15 @@ final class PlaylistSelectionStoreImpl: PlaylistSelectionStore {
         }
     }
     
-//    func isSelected(_ id: PlaylistID) -> Bool {
-//        selectedIDs.contains(id)
-//    }
-//    
-//    func toggle(_ id: PlaylistID) {
-//        if selectedIDs.contains(id) {
-//            selectedIDs.remove(id)
-//        } else {
-//            selectedIDs.insert(id)
-//        }
-//    }
+    func isSelected(_ id: PlaylistID) -> Bool {
+        selectedIDs.contains(id)
+    }
+    
+    func toggle(_ id: PlaylistID) {
+        if selectedIDs.contains(id) {
+            selectedIDs.remove(id)
+        } else {
+            selectedIDs.insert(id)
+        }
+    }
 }

@@ -41,25 +41,25 @@ final class NewEditGroupViewModel {
             .appleMusic: ServiceState(
                 isAuthorized: false,
                 playlists: [
-//                    Playlist(id: UUID(), name: "Fall '24", thumbnailURL: "", service: .appleMusic),
-//                    Playlist(id: UUID(), name: "Jungle 2025", thumbnailURL: "", service: .appleMusic),
-//                    Playlist(id: UUID(), name: "Chill", thumbnailURL: "", service: .appleMusic),
-//                    Playlist(id: UUID(), name: "Winter '26", thumbnailURL: "", service: .appleMusic),
-//                    Playlist(id: UUID(), name: "Ambient for s+t+j", thumbnailURL: "", service: .appleMusic),
-//                    Playlist(id: UUID(), name: "Jungle 2026", thumbnailURL: "", service: .appleMusic),
-//                    Playlist(id: UUID(), name: "Rest", thumbnailURL: "", service: .appleMusic)
+//                    Playlist(id: PlaylistID(id: UUID()), name: "Fall '24", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: PlaylistID(id: UUID()), name: "Jungle 2025", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: PlaylistID(id: UUID()), name: "Chill", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: PlaylistID(id: UUID()), name: "Winter '26", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: PlaylistID(id: UUID()), name: "Ambient for s+t+j", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: PlaylistID(id: UUID()), name: "Jungle 2026", thumbnailURL: "", service: .appleMusic),
+//                    Playlist(id: PlaylistID(id: UUID()), name: "Rest", thumbnailURL: "", service: .appleMusic)
                 ]
             ),
             .spotify: ServiceState(
                 isAuthorized: false,
                 playlists: [
-                    Playlist(id: UUID(), name: "Fall '24", thumbnailURL: "", service: .spotify),
-                    Playlist(id: UUID(), name: "Jungle 2025", thumbnailURL: "", service: .spotify),
-                    Playlist(id: UUID(), name: "Chill", thumbnailURL: "", service: .spotify),
-                    Playlist(id: UUID(), name: "Winter '26", thumbnailURL: "", service: .spotify),
-                    Playlist(id: UUID(), name: "Ambient for s+t+j", thumbnailURL: "", service: .spotify),
-                    Playlist(id: UUID(), name: "Jungle 2026", thumbnailURL: "", service: .spotify),
-                    Playlist(id: UUID(), name: "Rest", thumbnailURL: "", service: .spotify)
+                    Playlist(id: PlaylistID(id: UUID()), name: "Fall '24", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(id: UUID()), name: "Jungle 2025", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(id: UUID()), name: "Chill", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(id: UUID()), name: "Winter '26", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(id: UUID()), name: "Ambient for s+t+j", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(id: UUID()), name: "Jungle 2026", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(id: UUID()), name: "Rest", thumbnailURL: "", service: .spotify)
                 ]
             )
         ]
@@ -178,6 +178,7 @@ extension NewEditGroupViewModel {
         case grantAccess(Service)
     }
     
+    // TODO: Maybe this shouldn't live here
     struct ServiceState {
         var isAuthorized: Bool
         var playlists: [Playlist]
