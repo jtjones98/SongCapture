@@ -29,8 +29,10 @@ final class AppCoordinator {
     private let newEditNav = UINavigationController()
     // TODO: Maybe a barcode scanning screen?
     
-    private let networkClient: NetworkClient = NetworkClientImpl()
-    private lazy var repository: Repository = RepositoryImpl(networkClient: networkClient)
+    // MARK: - Dependencies
+    private let appleMusicRemote: MusicRemoteDataSource = AppleMusicRemote()
+    private let spotifyRemote: MusicRemoteDataSource = SpotifyRemote()
+    private lazy var repository: Repository = RepositoryImpl(appleMusicRemote: appleMusicRemote, spotifyRemote: spotifyRemote)
     private let audioMatcher: AudioMatcher = AudioMatcherImpl()
     private let playlistSelectionStore: PlaylistSelectionStore = PlaylistSelectionStoreImpl()
     private let authService: AuthService = AuthServiceImpl()

@@ -40,6 +40,8 @@ class AddPlaylistsViewController: UIViewController {
         configureViewModel()
         configureTableView()
         configureDataSource()
+        
+        viewModel.fetchPlaylists()
     }
     
     private func configureViewModel() {
@@ -51,6 +53,7 @@ class AddPlaylistsViewController: UIViewController {
                 // TODO: Loading spinner
                 break
             case .loaded(let renderModel):
+                print(renderModel)
                 self?.applySnapshot(renderModel: renderModel)
             case .error:
                 // TODO: Show some UI
@@ -80,7 +83,12 @@ class AddPlaylistsViewController: UIViewController {
             let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
             switch item {
             case .playlist(let id):
+                print("jtj: playlist \(id)")
+                print("self.renderModel: \(self.renderModel)")
+                print("rowsByID: \(self.renderModel?.rowsByID)")
                 if let playlist = self.renderModel?.rowsByID[id] {
+                    print("jtj configuring playlist \(playlist.title) with id \(id) row")
+                    
                     var config = PlaylistRowConfiguration(title: playlist.title, subtitle: playlist.subtitle, image: nil)
                     cell.contentConfiguration = config
                 }
@@ -106,6 +114,7 @@ class AddPlaylistsViewController: UIViewController {
         var snapshot = Snapshot()
         snapshot.appendSections([.main])
         snapshot.appendItems(newRender.items)
+        print("appending items: \(newRender.items)")
         dataSource.apply(snapshot, animatingDifferences: false)
     }
 }

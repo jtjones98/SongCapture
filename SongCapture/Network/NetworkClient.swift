@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MusicKit
 
 protocol NetworkClient {
     func fetchPlaylists(from service: Service) -> Data

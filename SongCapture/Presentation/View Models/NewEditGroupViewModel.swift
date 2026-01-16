@@ -53,13 +53,13 @@ final class NewEditGroupViewModel {
             .spotify: ServiceState(
                 isAuthorized: false,
                 playlists: [
-                    Playlist(id: PlaylistID(id: UUID()), name: "Fall '24", thumbnailURL: "", service: .spotify),
-                    Playlist(id: PlaylistID(id: UUID()), name: "Jungle 2025", thumbnailURL: "", service: .spotify),
-                    Playlist(id: PlaylistID(id: UUID()), name: "Chill", thumbnailURL: "", service: .spotify),
-                    Playlist(id: PlaylistID(id: UUID()), name: "Winter '26", thumbnailURL: "", service: .spotify),
-                    Playlist(id: PlaylistID(id: UUID()), name: "Ambient for s+t+j", thumbnailURL: "", service: .spotify),
-                    Playlist(id: PlaylistID(id: UUID()), name: "Jungle 2026", thumbnailURL: "", service: .spotify),
-                    Playlist(id: PlaylistID(id: UUID()), name: "Rest", thumbnailURL: "", service: .spotify)
+                    Playlist(id: PlaylistID(UUID().uuidString), name: "Fall '24", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(UUID().uuidString), name: "Jungle 2025", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(UUID().uuidString), name: "Chill", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(UUID().uuidString), name: "Winter '26", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(UUID().uuidString), name: "Ambient for s+t+j", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(UUID().uuidString), name: "Jungle 2026", thumbnailURL: "", service: .spotify),
+                    Playlist(id: PlaylistID(UUID().uuidString), name: "Rest", thumbnailURL: "", service: .spotify)
                 ]
             )
         ]

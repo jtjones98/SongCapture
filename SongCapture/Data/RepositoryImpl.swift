@@ -8,11 +8,13 @@
 import MusicKit
 
 final class RepositoryImpl: Repository {
+        
+    private let appleMusicRemote: MusicRemoteDataSource
+    private let spotifyRemote: MusicRemoteDataSource
     
-    private let network: NetworkClient
-    
-    init(networkClient: NetworkClient) {
-        self.network = networkClient
+    init(appleMusicRemote: MusicRemoteDataSource, spotifyRemote: MusicRemoteDataSource) {
+        self.appleMusicRemote = appleMusicRemote
+        self.spotifyRemote = spotifyRemote
     }
     
     func savePlaylist(_ playlist: Playlist) async throws {
@@ -34,8 +36,12 @@ final class RepositoryImpl: Repository {
     }
     
     func fetchPlaylists(from service: Service) async throws -> [Playlist] {
-        // TODO: Repo feetch playlists from apple music or spotify
-        return []
+        switch service {
+        case .appleMusic:
+            try await appleMusicRemote.fetchPlaylists()
+        case .spotify:
+            try await spotifyRemote.fetchPlaylists()
+        }
     }
 }
 

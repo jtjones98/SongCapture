@@ -25,7 +25,10 @@ struct PlaylistGroup: Hashable, Equatable {
     let playlists: [Playlist]
 }
 
-struct PlaylistID: Hashable { let id: UUID }
+struct PlaylistID: Hashable {
+    let rawValue: String
+    init(_ rawValue: String) { self.rawValue = rawValue }
+}
 
 struct PlaylistGroupID: Hashable { let id: UUID }
 

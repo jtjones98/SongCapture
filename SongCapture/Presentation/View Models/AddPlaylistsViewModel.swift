@@ -29,7 +29,7 @@ final class AddPlaylistsViewModel {
         self.selectionStore = selectionStore
     }
     
-    func fetchPlaylists(service: Service) {
+    func fetchPlaylists() {
         state = .loading
         
         fetchPlaylistsTask?.cancel()
@@ -39,6 +39,7 @@ final class AddPlaylistsViewModel {
             
             do {
                 let playlists = try await self.repository.fetchPlaylists(from: service)
+                print("playlists: \(playlists)")
                 await MainActor.run {
                     self.state = .loaded(self.makeRenderModel(from: playlists))
                 }
@@ -60,20 +61,25 @@ final class AddPlaylistsViewModel {
 
 private extension AddPlaylistsViewModel {
     func makeRenderModel(from playlists: [Playlist]) -> RenderModel {
+        print("JTJ: Making Render Model")
         // Make the row ID the playlist's unique ID
         let ids = playlists.map(\.id)
         
         // Create dictionary mapping ids to cell presentation data
-        var rowsByID: [PlaylistID: PlaylistRowVM] = [:]
-        rowsByID = playlists.reduce(into: [:]) { res, playlist in
-            rowsByID[playlist.id] = PlaylistRowVM(id: playlist.id, title: playlist.name, subtitle: playlist.service.title, imageURL: playlist.thumbnailURL, selected: false)
+        let rowsByID: [PlaylistID: PlaylistRowVM] = playlists.reduce(into: [:]) { res, playlist in
+            res[playlist.id] = PlaylistRowVM(
+                id: playlist.id,
+                title: playlist.name,
+                subtitle: playlist.service.title,
+                imageURL: playlist.thumbnailURL,
+                selected: false
+            )
         }
-        
         return RenderModel(items: ids.map { Item.playlist($0) }, rowsByID: rowsByID)
     }
     
     func handleSelection(for playlistID: PlaylistID) {
-        
+        // TODO: Handle selection
     }
 }
 

@@ -8,6 +8,8 @@
 import MusicKit
 import Foundation
 
+// TODO: Think about having separate auth service classes for apple music and spotify that both conform to one protocol that has a ensureAuthorized function. 
+
 protocol AuthService: AnyObject {
     func requestAppleMusicAuthorization() async throws
     func requestSpotifyAuthorization() async throws
