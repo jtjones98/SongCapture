@@ -147,7 +147,7 @@ final class PlaylistsAndGroupsViewController: UIViewController {
             switch item {
             case .playlist(let playlist):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath)
-                cell.contentConfiguration = PlaylistRowConfiguration(title: playlist.title, subtitle: playlist.service, image: nil)
+                cell.contentConfiguration = PlaylistRowConfiguration(title: playlist.name, subtitle: "\(playlist.service)", image: nil, artwork: playlist.artwork)
                 return cell
             case .group(let group):
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PlaylistGroupCell.reuseIdentifier, for: indexPath) as? PlaylistGroupCell else {
@@ -161,7 +161,7 @@ final class PlaylistsAndGroupsViewController: UIViewController {
                     .applying(UIImage.SymbolConfiguration(scale: .large))
                 let plusImage = UIImage(systemName: "plus", withConfiguration: symbolConfig)
                 // TODO: Get title from item
-                cell.contentConfiguration = PlaylistRowConfiguration(title: "Add new playlist", subtitle: nil, image: plusImage)
+                cell.contentConfiguration = PlaylistRowConfiguration(title: "Add new playlist")
                 return cell
             case .addGroup:
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AddNewGroupCell.reuseIdentifier, for: indexPath) as? AddNewGroupCell else {

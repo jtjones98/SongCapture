@@ -71,7 +71,7 @@ private extension AddPlaylistsViewModel {
                 id: playlist.id,
                 title: playlist.name,
                 subtitle: playlist.service.title,
-                imageURL: playlist.thumbnailURL,
+                artwork: playlist.artwork,
                 selected: false
             )
         }
@@ -115,10 +115,10 @@ extension AddPlaylistsViewModel {
     }
     
     struct PlaylistRowVM {
-        var id: PlaylistID
-        var title: String
-        var subtitle: String
-        var imageURL: String
-        var selected: Bool
+        let id: PlaylistID
+        let title: String
+        let subtitle: String
+        let artwork: PlaylistArtwork
+        let selected: Bool
     }
 }

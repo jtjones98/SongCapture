@@ -66,7 +66,9 @@ class AddPlaylistsViewController: UIViewController {
         tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.backgroundColor = .clear
         
+        tableView.delegate = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+        tableView.allowsMultipleSelection = true
         
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -79,17 +81,14 @@ class AddPlaylistsViewController: UIViewController {
     }
     
     private func configureDataSource() {
-        dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
+        dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
+            guard let self else { return UITableViewCell() }
             let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
             switch item {
             case .playlist(let id):
-                print("jtj: playlist \(id)")
-                print("self.renderModel: \(self.renderModel)")
-                print("rowsByID: \(self.renderModel?.rowsByID)")
                 if let playlist = self.renderModel?.rowsByID[id] {
                     print("jtj configuring playlist \(playlist.title) with id \(id) row")
-                    
-                    var config = PlaylistRowConfiguration(title: playlist.title, subtitle: playlist.subtitle, image: nil)
+                    let config = PlaylistRowConfiguration(title: playlist.title, artwork: playlist.artwork)
                     cell.contentConfiguration = config
                 }
                 return cell
@@ -119,3 +118,6 @@ class AddPlaylistsViewController: UIViewController {
     }
 }
 
+extension AddPlaylistsViewController: UITableViewDelegate {
+    
+}

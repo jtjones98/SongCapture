@@ -36,13 +36,17 @@ final class AppCoordinator {
     private let audioMatcher: AudioMatcher = AudioMatcherImpl()
     private let playlistSelectionStore: PlaylistSelectionStore = PlaylistSelectionStoreImpl()
     private let authService: AuthService = AuthServiceImpl()
+    private let imageLoader: ImageLoading = ImageLoader()
     
+    private let loader = ImageLoader()
     
     init(window: UIWindow) {
         self.window = window
     }
     
     func start() {
+        PlaylistRowContentView.imageLoader = imageLoader // TODO: Rethink this... 
+        
         setupUploadTab()
         setupListenTab()
         setupPlaylistsAndGroupsTab()

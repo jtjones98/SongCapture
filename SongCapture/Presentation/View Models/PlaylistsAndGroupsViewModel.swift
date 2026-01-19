@@ -28,9 +28,9 @@ final class PlaylistsAndGroupsViewModel {
     func loadPlaylistsAndGroups() {
         state = .loading
         
-        let item1: Item = .playlist(Playlist(id: UUID(), title: "Jungle", service: "Apple Music", thumbnailURL: ""))
-        let item2: Item = .playlist(Playlist(id: UUID(), title: "Chill & Focus", service: "Apple Music", thumbnailURL: ""))
-        let item3: Item = .playlist(Playlist(id: UUID(), title: "Piano", service: "Apple Music", thumbnailURL: ""))
+        let item1: Item = .playlist(Playlist(id: PlaylistID(UUID().uuidString), name: "Jungle", artwork: .none, service: .appleMusic))
+        let item2: Item = .playlist(Playlist(id: PlaylistID(UUID().uuidString), name: "Chill & Focus", artwork: .none, service: .appleMusic))
+        let item3: Item = .playlist(Playlist(id: PlaylistID(UUID().uuidString), name: "Piano", artwork: .none, service: .appleMusic))
         let addPlaylist: Item = .addPlaylist
         
         let item4: Item = .group(PlaylistGroupItem(id: UUID(), title: "Jungle"))
@@ -78,21 +78,6 @@ extension PlaylistsAndGroupsViewModel {
         case group(PlaylistGroupItem)
         case addPlaylist
         case addGroup
-    }
-    
-    struct Playlist: Hashable {
-        let id: UUID
-        let title: String
-        let service: String
-        let thumbnailURL: String
-        
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(id)
-        }
-        
-        static func ==(lhs: Playlist, rhs: Playlist) -> Bool {
-            lhs.id == rhs.id
-        }
     }
     
     struct PlaylistGroupItem: Hashable {

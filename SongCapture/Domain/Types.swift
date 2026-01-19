@@ -5,6 +5,7 @@
 //  Created by John Jones on 1/15/26.
 //
 
+import MusicKit
 import Foundation
 
 enum Service: Hashable {
@@ -15,7 +16,7 @@ enum Service: Hashable {
 struct Playlist: Hashable, Equatable {
     let id: PlaylistID
     let name: String
-    let thumbnailURL: String
+    let artwork: PlaylistArtwork
     let service: Service
 }
 
@@ -31,6 +32,12 @@ struct PlaylistID: Hashable {
 }
 
 struct PlaylistGroupID: Hashable { let id: UUID }
+
+enum PlaylistArtwork {
+    case appleMusic(Artwork)
+    case spotify(String)
+    case none
+}
 
 struct Track: Hashable {
     let title: String
@@ -51,5 +58,15 @@ extension Service {
         case .appleMusic: "apple_music_logo"
         case .spotify: "spotify_logo"
         }
+    }
+}
+
+extension Playlist {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func ==(lhs: Playlist, rhs: Playlist) -> Bool {
+        lhs.id == rhs.id
     }
 }

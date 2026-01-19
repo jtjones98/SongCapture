@@ -9,7 +9,7 @@ import UIKit
 // MARK: - Reusable AddNewRowView
 
 final class AddNewRowView: UIView {
-    private let contentView = PlaylistRowContentView(configuration: PlaylistRowConfiguration(title: "", subtitle: nil, image: nil))
+    private let contentView = PlaylistRowContentView(configuration: PlaylistRowConfiguration(title: ""))
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -34,15 +34,13 @@ final class AddNewRowView: UIView {
     }
 
     func configure(title: String) {
-        let symbolConfig = UIImage.SymbolConfiguration(pointSize: 18, weight: .semibold)
-        let image = UIImage(systemName: "plus.circle.fill", withConfiguration: symbolConfig)
-        let configuration = PlaylistRowConfiguration(title: title, subtitle: nil, image: image)
+        let configuration = PlaylistRowConfiguration(title: title)
         contentView.configuration = configuration
         accessibilityLabel = title
     }
 
     func prepareForReuse() {
-        let configuration = PlaylistRowConfiguration(title: "", subtitle: nil, image: nil)
+        let configuration = PlaylistRowConfiguration(title: "")
         contentView.configuration = configuration
         accessibilityLabel = nil
     }
