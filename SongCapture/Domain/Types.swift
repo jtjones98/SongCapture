@@ -17,21 +17,23 @@ struct Playlist: Hashable, Equatable {
     let id: PlaylistID
     let name: String
     let artwork: PlaylistArtwork
-    let service: Service
 }
 
 struct PlaylistGroup: Hashable, Equatable {
     let id: PlaylistGroupID
-    let name: String
-    let playlists: [Playlist]
+    var name: String
+    var playlistIDs: [PlaylistID]
 }
 
 struct PlaylistID: Hashable {
+    let service: Service
     let rawValue: String
-    init(_ rawValue: String) { self.rawValue = rawValue }
 }
 
-struct PlaylistGroupID: Hashable { let id: UUID }
+struct PlaylistGroupID: Hashable {
+    let id: UUID
+    init() { id = UUID() }
+}
 
 enum PlaylistArtwork {
     case appleMusic(Artwork)
@@ -67,6 +69,16 @@ extension Playlist {
     }
     
     static func ==(lhs: Playlist, rhs: Playlist) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+extension PlaylistGroup {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func ==(lhs: PlaylistGroup, rhs: PlaylistGroup) -> Bool {
         lhs.id == rhs.id
     }
 }

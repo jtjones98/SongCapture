@@ -36,9 +36,7 @@ final class ListenViewModel: NSObject {
     var onStateChanged: ((ListenViewState) -> Void)?
     
     private var state: ListenViewState = .idle {
-        didSet {
-            onStateChanged?(state)
-        }
+        didSet { onStateChanged?(state) }
     }
     
     private var matcher: AudioMatcher

@@ -1,5 +1,5 @@
 //
-//  NewEditGroupViewController.swift
+//  GroupEditorViewController.swift
 //  SongCapture
 //
 //  Created by John Jones on 1/9/26.
@@ -7,20 +7,20 @@
 
 import UIKit
 
-fileprivate typealias Section = NewEditGroupViewModel.Section
-fileprivate typealias Item = NewEditGroupViewModel.Item
+fileprivate typealias Section = GroupEditorViewModel.Section
+fileprivate typealias Item = GroupEditorViewModel.Item
 fileprivate typealias DataSource = UITableViewDiffableDataSource<Section, Item>
 fileprivate typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
 
-class NewEditGroupViewController: UIViewController {
+class GroupEditorViewController: UIViewController {
     
-    private var viewModel: NewEditGroupViewModel
+    private var viewModel: GroupEditorViewModel
     private weak var coordinator: PlaylistsAndGroupsCoordinating?
     
     private var tableView: UITableView!
     private var dataSource: DataSource!
     
-    init(with viewModel: NewEditGroupViewModel, coordinator: PlaylistsAndGroupsCoordinating) {
+    init(with viewModel: GroupEditorViewModel, coordinator: PlaylistsAndGroupsCoordinating) {
         self.viewModel = viewModel
         self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
@@ -35,12 +35,13 @@ class NewEditGroupViewController: UIViewController {
         view.backgroundColor = .systemBackground
         
         navigationItem.largeTitleDisplayMode = .always
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Save", style: .prominent, target: self, action: #selector(didTapSave))
                 
         configureViewModel()
         configureTableView()
         configureDataSource()
         
-        viewModel.getPlaylists()
+        viewModel.loadDetails()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -65,6 +66,12 @@ class NewEditGroupViewController: UIViewController {
                     self?.presentAuthFailureAlert(title: title, message: body, actionTitle: action)
                 }
             }
+        }
+        
+        viewModel.onAddPlaylists = { [weak self] args in
+            self?.coordinator?.showRemotePlaylists(service: args.service, preselections: args.preselections, onSave: { [weak self] ids, playlistByIDs in
+                self?.viewModel.applySelectedPlaylists(ids, playlistByIDs, for: args.service)
+            })
         }
     }
     
@@ -97,8 +104,7 @@ class NewEditGroupViewController: UIViewController {
             switch item {
             case .playlist(let playlist):
                 let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-                var config = cell.defaultContentConfiguration()
-                config.text = playlist.name
+                let config = PlaylistRowConfiguration(title: playlist.name, artwork: playlist.artwork)
                 cell.contentConfiguration = config
                 return cell
             case .grantAccess(let service):
@@ -113,7 +119,7 @@ class NewEditGroupViewController: UIViewController {
         }
     }
     
-    private func applySnapshot(render: NewEditGroupViewModel.RenderModel) {
+    private func applySnapshot(render: GroupEditorViewModel.RenderModel) {
         var snapshot = Snapshot()
         snapshot.appendSections(render.sections)
         
@@ -132,24 +138,6 @@ class NewEditGroupViewController: UIViewController {
         } else {
             dataSource.apply(snapshot, animatingDifferences: true)
         }
-        
-        //dataSource.apply(snapshot, animatingDifferences: true)
-    }
-    
-    @objc private func footerButtonTapped() {
-        goToNewScreen()
-    }
-
-    private func goToNewScreen() {
-        // Placeholder destination; replace with your actual view controller as needed
-        let vc = UIViewController()
-        vc.view.backgroundColor = .systemBackground
-        vc.title = "Next Screen"
-        if let navigationController = self.navigationController {
-            navigationController.pushViewController(vc, animated: true)
-        } else {
-            present(vc, animated: true)
-        }
     }
     
     private func presentAuthFailureAlert(title: String, message: String, actionTitle: String?) {
@@ -167,9 +155,13 @@ class NewEditGroupViewController: UIViewController {
         alert.addAction(cancelAction)
         present(alert, animated: true)
     }
+    
+    @objc func didTapSave() {
+        coordinator?.dismissGroupEditor()
+    }
 }
 
-extension NewEditGroupViewController: UITableViewDelegate {
+extension GroupEditorViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let section = dataSource.snapshot().sectionIdentifiers[section]
@@ -242,7 +234,7 @@ extension NewEditGroupViewController: UITableViewDelegate {
     }
     
     private func viewAllPlaylistsTapped(service: Service) {
-        coordinator?.showPlaylists(service: service)
+        viewModel.didTapAddPlaylist(for: service)
     }
 }
 

@@ -12,8 +12,9 @@ protocol AddSongsCoordinating: AnyObject {
 }
 
 protocol PlaylistsAndGroupsCoordinating: AnyObject {
-    func showNewEditGroup()
-    func showPlaylists(service: Service)
+    func showGroupEditor(id: PlaylistGroupID?)
+    func showRemotePlaylists(service: Service, preselections: Set<PlaylistID>, onSave: @escaping (Set<PlaylistID>, [PlaylistID: Playlist]) -> Void)
+    func dismissGroupEditor()
 }
 
 @MainActor
@@ -23,22 +24,28 @@ final class AppCoordinator {
     
     private let tabBarController = UITabBarController()
     
+    // MARK: - Navigation Controllers
     private let uploadNav = UINavigationController()
     private let listenNav = UINavigationController()
     private let playlistsAndGroupsNav = UINavigationController()
-    private let newEditNav = UINavigationController()
-    // TODO: Maybe a barcode scanning screen?
+    private let remotePlaylistsNav = UINavigationController()
+    // Maybe a barcode scanning screen? Hmm...
     
     // MARK: - Dependencies
-    private let appleMusicRemote: MusicRemoteDataSource = AppleMusicRemote()
-    private let spotifyRemote: MusicRemoteDataSource = SpotifyRemote()
-    private lazy var repository: Repository = RepositoryImpl(appleMusicRemote: appleMusicRemote, spotifyRemote: spotifyRemote)
-    private let audioMatcher: AudioMatcher = AudioMatcherImpl()
-    private let playlistSelectionStore: PlaylistSelectionStore = PlaylistSelectionStoreImpl()
     private let authService: AuthService = AuthServiceImpl()
-    private let imageLoader: ImageLoading = ImageLoader()
+    private let appleMusicRemote: MusicRemote = AppleMusicRemote()
+    private let spotifyRemote: MusicRemote = SpotifyRemote()
+    private lazy var repository = RepositoryImpl(auth: authService, appleMusicRemote: appleMusicRemote, spotifyRemote: spotifyRemote)
     
-    private let loader = ImageLoader()
+    private lazy var loadLibraryUseCase = LoadLibraryUseCaseImpl(repository: repository)
+    private lazy var loadGroupUseCase = LoadGroupUseCaseImpl(repository: repository)
+    private lazy var saveGroupUseCase = SaveGroupUseCaseImpl(repository: repository)
+    private lazy var savePlaylistUseCase = SavePlaylistUseCaseImpl(repository: repository)
+    private lazy var connectServiceUseCase = ConnectServiceUseCaseImpl(repository: repository)
+    private lazy var loadRemoteUseCase = LoadRemoteUseCaseImpl(repository: repository)
+    
+    private let audioMatcher: AudioMatcher = AudioMatcherImpl()
+    private let imageLoader: ImageLoading = ImageLoader()
     
     init(window: UIWindow) {
         self.window = window
@@ -80,7 +87,7 @@ final class AppCoordinator {
     }
     
     private func setupPlaylistsAndGroupsTab() {
-        let vm = PlaylistsAndGroupsViewModel(repository: repository)
+        let vm = PlaylistsAndGroupsViewModel(loadLibraryUseCase: loadLibraryUseCase)
         let vc = PlaylistsAndGroupsViewController(with: vm, coordinator: self)
         vc.title = "Playlists & Groups"
         vc.tabBarItem = UITabBarItem(title: "Playlists & Groups", image: UIImage(systemName: "rectangle.3.group"), tag: 2)
@@ -98,29 +105,40 @@ extension AppCoordinator: AddSongsCoordinating {
 
 // MARK: Playlist and Groups Coordinating
 extension AppCoordinator: PlaylistsAndGroupsCoordinating {
-    func showNewEditGroup() {
-        let vm = NewEditGroupViewModel(repository: repository, authService: authService, selectionStore: playlistSelectionStore)
-        let vc = NewEditGroupViewController(with: vm, coordinator: self)
+    
+    func showGroupEditor(id: PlaylistGroupID? = nil) {
+        let vm = GroupEditorViewModel(groupID: id, loadGroupUseCase: loadGroupUseCase, saveGroupUseCase: saveGroupUseCase, savePlaylistUseCase: savePlaylistUseCase, connectServiceUseCase: connectServiceUseCase)
+        let vc = GroupEditorViewController(with: vm, coordinator: self)
         vc.title = "New Group"
         
-        newEditNav.setViewControllers([vc], animated: true)
-        newEditNav.modalPresentationStyle = .formSheet
-
-        if let sheet = newEditNav.sheetPresentationController {
+        playlistsAndGroupsNav.pushViewController(vc, animated: true)
+    }
+    
+    func showRemotePlaylists(service: Service, preselections: Set<PlaylistID>, onSave: @escaping (Set<PlaylistID>, [PlaylistID : Playlist]) -> Void) {
+        let vm = RemotePlaylistsSelectionViewModel(service: service, selections: preselections, loadRemoteUseCase: loadRemoteUseCase)
+        let vc = RemotePlaylistsSelectionViewController(with: vm, coordinator: self)
+        
+        vm.onSave = { [weak self] selections, playlistsByID in
+            onSave(selections, playlistsByID)
+            self?.remotePlaylistsNav.dismiss(animated: true)
+        }
+        
+        vc.title = "Playlists"
+        
+        remotePlaylistsNav.setViewControllers([vc], animated: true)
+        remotePlaylistsNav.modalPresentationStyle = .formSheet
+        
+        if let sheet = remotePlaylistsNav.sheetPresentationController {
             sheet.detents = [.large()]
             sheet.prefersGrabberVisible = true
             sheet.prefersScrollingExpandsWhenScrolledToEdge = true
             sheet.selectedDetentIdentifier = .medium
         }
-
-        playlistsAndGroupsNav.present(newEditNav, animated: true)
+        
+        playlistsAndGroupsNav.present(remotePlaylistsNav, animated: true)
     }
     
-    func showPlaylists(service: Service) {
-        let vm = AddPlaylistsViewModel(service: service, repository: repository, selectionStore: playlistSelectionStore)
-        let vc = AddPlaylistsViewController(with: vm, coordinator: self)
-        vc.title = "Playlists"
-        newEditNav.pushViewController(vc, animated: true)
+    func dismissGroupEditor() {
+        playlistsAndGroupsNav.popToRootViewController(animated: true)
     }
 }
-

@@ -2,21 +2,18 @@
 //  AppleMusicRemote.swift
 //  SongCapture
 //
-//  Created by John Jones on 1/16/26.
+//  Created by John Jones on 1/20/26.
 //
-import Foundation
+
 import MusicKit
 
-final class AppleMusicRemote: MusicRemoteDataSource {
+final class AppleMusicRemote: MusicRemote {
     func fetchPlaylists() async throws -> [Playlist] {
-        print("apple music remote: fetching playlists")
         var request = MusicLibraryRequest<MusicKit.Playlist>()
         request.sort(by: \.name, ascending: true)
         request.limit = 25
         
         let response = try await request.response()
-        print("apple music response: \(response)")
-        print("items: \(response.items)")
         
         return response.items.map { item in
             var artwork: PlaylistArtwork
@@ -27,12 +24,10 @@ final class AppleMusicRemote: MusicRemoteDataSource {
             }
             
             return Playlist(
-                id: PlaylistID(item.id.rawValue),
+                id: PlaylistID(service: .appleMusic, rawValue: item.id.rawValue),
                 name: item.name,
                 artwork: artwork,
-                service: .appleMusic
             )
         }
     }
 }
-

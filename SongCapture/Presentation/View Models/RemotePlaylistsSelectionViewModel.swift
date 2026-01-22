@@ -1,32 +1,34 @@
 //
-//  AddPlaylistsViewModel.swift
+//  RemotePlaylistsSelectionViewModel.swift
 //  SongCapture
 //
 //  Created by John Jones on 1/12/26.
 //
 
 import Foundation
+import MusicKit
 
-final class AddPlaylistsViewModel {
+final class RemotePlaylistsSelectionViewModel {
     
     private let service: Service
-    private let repository: Repository
-    private let selectionStore: PlaylistSelectionStore
+    private let loadRemoteUseCase: LoadRemoteUseCase
+    
+    private var draftSelections: Set<PlaylistID> = []
+    private var playlistsByID: [PlaylistID: Playlist] = [:]
     
     private var state: ViewState = .idle {
-        didSet {
-            onStateChange?(state)
-        }
+        didSet { onStateChange?(state) }
     }
     
     var onStateChange: ((ViewState) -> Void)?
+    var onSave: ((Set<PlaylistID>, [PlaylistID: Playlist]) -> Void)?
     
     private var fetchPlaylistsTask: Task<Void, Never>?
     
-    init(service: Service, repository: Repository, selectionStore: PlaylistSelectionStore) {
+    init(service: Service, selections: Set<PlaylistID>, loadRemoteUseCase: LoadRemoteUseCase) {
         self.service = service
-        self.repository = repository
-        self.selectionStore = selectionStore
+        self.loadRemoteUseCase = loadRemoteUseCase
+        self.draftSelections = selections
     }
     
     func fetchPlaylists() {
@@ -38,20 +40,32 @@ final class AddPlaylistsViewModel {
             guard let self else { return }
             
             do {
-                let playlists = try await self.repository.fetchPlaylists(from: service)
-                print("playlists: \(playlists)")
+                let playlists = try await loadRemoteUseCase.fetchPlaylists(from: service)
+                self.playlistsByID = playlists.reduce(into: [:]) { $0[$1.id] = $1 }
                 await MainActor.run {
                     self.state = .loaded(self.makeRenderModel(from: playlists))
                 }
             } catch {
-                // TODO: Handle error
+                // TODO: Handle loading remote playlists error
             }
         }
     }
     
-    func toggleSelection(playlistID: PlaylistID) {
-        // TODO: call
-        selectionStore.toggle(playlistID)
+    func setSelection(_ selection: Bool, for id: PlaylistID) {
+        if selection {
+            draftSelections.insert(id)
+        } else {
+            draftSelections.remove(id)
+        }
+    }
+        
+    func isSelected(_ id: PlaylistID) -> Bool {
+        draftSelections.contains(id)
+    }
+    
+    func saveSelections() {
+        let localPlaylistsByID = playlistsByID.filter { draftSelections.contains($0.key) }
+        onSave?(draftSelections, localPlaylistsByID)
     }
     
     deinit {
@@ -59,9 +73,8 @@ final class AddPlaylistsViewModel {
     }
 }
 
-private extension AddPlaylistsViewModel {
+private extension RemotePlaylistsSelectionViewModel {
     func makeRenderModel(from playlists: [Playlist]) -> RenderModel {
-        print("JTJ: Making Render Model")
         // Make the row ID the playlist's unique ID
         let ids = playlists.map(\.id)
         
@@ -70,20 +83,16 @@ private extension AddPlaylistsViewModel {
             res[playlist.id] = PlaylistRowVM(
                 id: playlist.id,
                 title: playlist.name,
-                subtitle: playlist.service.title,
+                subtitle: playlist.id.service.title,
                 artwork: playlist.artwork,
-                selected: false
+                selected: draftSelections.contains(playlist.id) // May be unneccessary, future proofing in case we end up calling to makeRenderModel multiple times while on this screen. Right now, its called once when we first loads.
             )
         }
         return RenderModel(items: ids.map { Item.playlist($0) }, rowsByID: rowsByID)
     }
-    
-    func handleSelection(for playlistID: PlaylistID) {
-        // TODO: Handle selection
-    }
 }
 
-extension AddPlaylistsViewModel {
+extension RemotePlaylistsSelectionViewModel {
     
     enum ViewState {
         case idle
@@ -106,19 +115,19 @@ extension AddPlaylistsViewModel {
         }
     }
     
-    enum Section: Hashable {
-        case main
-    }
-    
-    enum Item: Hashable {
-        case playlist(PlaylistID)
-    }
-    
     struct PlaylistRowVM {
         let id: PlaylistID
         let title: String
         let subtitle: String
         let artwork: PlaylistArtwork
         let selected: Bool
+    }
+    
+    enum Section: Hashable {
+        case main
+    }
+    
+    enum Item: Hashable {
+        case playlist(PlaylistID)
     }
 }

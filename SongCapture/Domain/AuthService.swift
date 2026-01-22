@@ -2,17 +2,14 @@
 //  AuthService.swift
 //  SongCapture
 //
-//  Created by John Jones on 1/13/26.
+//  Created by John Jones on 1/20/26.
 //
 
-import MusicKit
-import Foundation
-
-// TODO: Think about having separate auth service classes for apple music and spotify that both conform to one protocol that has a ensureAuthorized function. 
-
-protocol AuthService: AnyObject {
+protocol AuthService {
     func requestAppleMusicAuthorization() async throws
     func requestSpotifyAuthorization() async throws
+    func isAuthorizedAppleMusic() -> Bool
+    func isAuthorizedSpotify() -> Bool
 }
 
 enum AuthError: Error, CustomDebugStringConvertible {
@@ -28,25 +25,3 @@ enum AuthError: Error, CustomDebugStringConvertible {
         }
     }
 }
-
-final class AuthServiceImpl: AuthService {
-    
-    func requestAppleMusicAuthorization() async throws {
-        let authorizationStatus = await MusicAuthorization.request()
-        switch authorizationStatus {
-        case .authorized:
-            break
-        case .denied, .restricted:
-            throw AuthError.authorizationDenied
-        case .notDetermined:
-            break
-        @unknown default:
-            throw AuthError.unknown
-        }
-    }
-        
-    func requestSpotifyAuthorization() async throws {
-        // TODO: setup Spotify authorization
-    }
-}
-

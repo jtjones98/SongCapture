@@ -11,6 +11,7 @@ fileprivate typealias Section = PlaylistsAndGroupsViewModel.Section
 fileprivate typealias Item = PlaylistsAndGroupsViewModel.Item
 fileprivate typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
 fileprivate typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
+fileprivate typealias RenderModel = PlaylistsAndGroupsViewModel.RenderModel
 
 final class PlaylistsAndGroupsViewController: UIViewController {
     private var collectionView: UICollectionView!
@@ -38,7 +39,9 @@ final class PlaylistsAndGroupsViewController: UIViewController {
         configureViewModel()
         configureCollectionView()
         configureDataSource()
-        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
         viewModel.loadPlaylistsAndGroups()
     }
     
@@ -49,8 +52,8 @@ final class PlaylistsAndGroupsViewController: UIViewController {
                 break
             case .loading:
                 break
-            case .loaded(let playlists, let groups):
-                self?.applySnapshot(playlists: playlists, groups: groups)
+            case .loaded(let render):
+                self?.applySnapshot(render: render)
             }
         }
     }
@@ -147,13 +150,13 @@ final class PlaylistsAndGroupsViewController: UIViewController {
             switch item {
             case .playlist(let playlist):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath)
-                cell.contentConfiguration = PlaylistRowConfiguration(title: playlist.name, subtitle: "\(playlist.service)", image: nil, artwork: playlist.artwork)
+                cell.contentConfiguration = PlaylistRowConfiguration(title: playlist.name, subtitle: "\(playlist.id.service)", image: nil, artwork: playlist.artwork)
                 return cell
             case .group(let group):
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PlaylistGroupCell.reuseIdentifier, for: indexPath) as? PlaylistGroupCell else {
                     return UICollectionViewCell()
                 }
-                cell.configure(title: group.title)
+                cell.configure(title: group.name)
                 return cell
             case .addPlaylist:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath)
@@ -161,7 +164,7 @@ final class PlaylistsAndGroupsViewController: UIViewController {
                     .applying(UIImage.SymbolConfiguration(scale: .large))
                 let plusImage = UIImage(systemName: "plus", withConfiguration: symbolConfig)
                 // TODO: Get title from item
-                cell.contentConfiguration = PlaylistRowConfiguration(title: "Add new playlist")
+                cell.contentConfiguration = PlaylistRowConfiguration(title: "Add new playlist", image: plusImage)
                 return cell
             case .addGroup:
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AddNewGroupCell.reuseIdentifier, for: indexPath) as? AddNewGroupCell else {
@@ -191,12 +194,15 @@ final class PlaylistsAndGroupsViewController: UIViewController {
         }
     }
     
-    // TODO: This is messy, do something similar to what we're doing in NewEditGroupViewModel & ViewController
-    private func applySnapshot(playlists: [Item], groups: [Item], animate: Bool = true) {
+    private func applySnapshot(render: RenderModel, animate: Bool = true) {
         var snapshot = Snapshot()
-        snapshot.appendSections([.playlists, .groups])
-        snapshot.appendItems(playlists, toSection: .playlists)
-        snapshot.appendItems(groups, toSection: .groups)
+        snapshot.appendSections(render.sections)
+        
+        for section in render.sections {
+            if let items = render.itemsBySection[section] {
+                snapshot.appendItems(items, toSection: section)
+            }
+        }
         dataSource.apply(snapshot, animatingDifferences: animate)
     }
 }
@@ -208,17 +214,17 @@ extension PlaylistsAndGroupsViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
         switch item {
-        case .playlist(let playlist):
-            // TODO: lets navigate to a page where we can see previous uploads
+        case .playlist(_):
+            // TODO: Navigate to a page where user can see previous uploads
             break
         case .group(let group):
-            // TODO: Navigate to page where users can edit playlist groups (this might end up being the same vc as add)
+            coordinator?.showGroupEditor(id: group.id)
             break
         case .addPlaylist:
-            // TODO: Navigate to page where users can view apple music playlists and add
+            // TODO: Navigate to page where users can view remote playlists and add
             break
         case .addGroup:
-            coordinator?.showNewEditGroup()
+            coordinator?.showGroupEditor(id: nil)
         }
     }
 }

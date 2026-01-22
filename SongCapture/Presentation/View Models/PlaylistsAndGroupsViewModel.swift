@@ -9,47 +9,73 @@ import Foundation
 
 final class PlaylistsAndGroupsViewModel {
     
-    private let repository: Repository
+    private let loadLibraryUseCase: LoadLibraryUseCase
         
-    var onStateChange: ((PlaylistsAndGroupsViewState) -> Void)?
-    
     private var state: PlaylistsAndGroupsViewState = .idle {
-        didSet {
-            onStateChange?(state)
-        }
+        didSet { onStateChange?(state) }
     }
     
-    init(repository: Repository) {
-        self.repository = repository
+    var onStateChange: ((PlaylistsAndGroupsViewState) -> Void)?
+
+    private var loadPlaylistsAndGroupsTask: Task<Void, Never>?
+    
+    init(loadLibraryUseCase: LoadLibraryUseCase) {
+        self.loadLibraryUseCase = loadLibraryUseCase
     }
     
     private var items: [Item] = []
     
     func loadPlaylistsAndGroups() {
         state = .loading
-        
-        let item1: Item = .playlist(Playlist(id: PlaylistID(UUID().uuidString), name: "Jungle", artwork: .none, service: .appleMusic))
-        let item2: Item = .playlist(Playlist(id: PlaylistID(UUID().uuidString), name: "Chill & Focus", artwork: .none, service: .appleMusic))
-        let item3: Item = .playlist(Playlist(id: PlaylistID(UUID().uuidString), name: "Piano", artwork: .none, service: .appleMusic))
-        let addPlaylist: Item = .addPlaylist
-        
-        let item4: Item = .group(PlaylistGroupItem(id: UUID(), title: "Jungle"))
-        let item5: Item = .group(PlaylistGroupItem(id: UUID(), title: "Chill & Focus"))
-        let item6: Item = .group(PlaylistGroupItem(id: UUID(), title: "Piano"))
-        let item7: Item = .group(PlaylistGroupItem(id: UUID(), title: "Fall '25"))
-        let addGroup: Item = Item.addGroup
-        
-        
-        let playlists = [item1, item2, item3, addPlaylist]
-        let groups = [item4, item5, item6, item7, addGroup]
-        state = .loaded(playlists: playlists, groups: groups)
+
+        loadPlaylistsAndGroupsTask?.cancel()
+
+        loadPlaylistsAndGroupsTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let (playlists, groups): ([Playlist], [PlaylistGroup]) = try await loadLibraryUseCase.fetchPlaylistsAndGroups()
+                await MainActor.run {
+                    let render = self.makeRenderModel(playlists: playlists, groups: groups)
+                    self.state = .loaded(render)
+                }
+            } catch {
+                // TODO: Handle load playlists and groups error
+                await MainActor.run {
+                    self.state = .idle
+                }
+            }
+        }
+    }
+    
+    deinit {
+        loadPlaylistsAndGroupsTask?.cancel()
     }
 }
 
-// TODO: Maybe follow similar pattern to NewEditGroupViewModel and make use of a makeRenderModel() function
+// TODO: Maybe follow similar pattern to GroupEditorViewModel and make use of a makeRenderModel() function
 private extension PlaylistsAndGroupsViewModel {
-    func makeRenderModel() -> RenderModel {
-        return RenderModel(section: [], itemsBySection: [:])
+    func makeRenderModel(playlists: [Playlist], groups: [PlaylistGroup]) -> RenderModel {
+        var sections: [Section] = []
+        var itemsBySection: [Section: [Item]] = [:]
+        
+        sections.append(.playlists)
+        if (!playlists.isEmpty) {
+            for playlist in playlists {
+                itemsBySection[.playlists, default: []].append(Item.playlist(playlist))
+            }
+        }
+        
+        sections.append(.groups)
+        if (!groups.isEmpty) {
+            for group in groups {
+                itemsBySection[.groups, default: []].append(Item.group(group))
+            }
+        }
+        
+        itemsBySection[.playlists, default: []].append(Item.addPlaylist)
+        itemsBySection[.groups, default: []].append(Item.addGroup)
+        
+        return RenderModel(sections: sections, itemsBySection: itemsBySection)
     }
 }
 
@@ -60,11 +86,11 @@ extension PlaylistsAndGroupsViewModel {
     enum PlaylistsAndGroupsViewState {
         case idle
         case loading
-        case loaded(playlists: [Item], groups: [Item])
+        case loaded(RenderModel)
     }
     
     struct RenderModel {
-        let section: [Section]
+        let sections: [Section]
         let itemsBySection: [Section: [Item]]
     }
     
@@ -73,24 +99,13 @@ extension PlaylistsAndGroupsViewModel {
         case groups
     }
     
+    // TODO: Consider following similar pattern to RemotePlaylistsSelectionViewModel
+    // make the diffable item hold just identity. Presentation data in a row view model
     enum Item: Hashable {
         case playlist(Playlist)
-        case group(PlaylistGroupItem)
+        case group(PlaylistGroup)
         case addPlaylist
         case addGroup
-    }
-    
-    struct PlaylistGroupItem: Hashable {
-        var id: UUID
-        var title: String
-        
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(id)
-        }
-        
-        static func ==(lhs: PlaylistGroupItem, rhs: PlaylistGroupItem) -> Bool {
-            lhs.id == rhs.id
-        }
     }
 }
 

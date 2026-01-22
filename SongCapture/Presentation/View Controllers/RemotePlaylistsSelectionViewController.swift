@@ -1,5 +1,5 @@
 //
-//  AddPlaylistsViewController.swift
+//  RemotePlaylistsSelectionViewController.swift
 //  SongCapture
 //
 //  Created by John Jones on 1/12/26.
@@ -7,15 +7,15 @@
 
 import UIKit
 
-fileprivate typealias Section = AddPlaylistsViewModel.Section
-fileprivate typealias Item = AddPlaylistsViewModel.Item
+fileprivate typealias Section = RemotePlaylistsSelectionViewModel.Section
+fileprivate typealias Item = RemotePlaylistsSelectionViewModel.Item
 fileprivate typealias DataSource = UITableViewDiffableDataSource<Section, Item>
 fileprivate typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
-fileprivate typealias RenderModel = AddPlaylistsViewModel.RenderModel
+fileprivate typealias RenderModel = RemotePlaylistsSelectionViewModel.RenderModel
 
-class AddPlaylistsViewController: UIViewController {
+class RemotePlaylistsSelectionViewController: UIViewController {
     
-    private let viewModel: AddPlaylistsViewModel
+    private let viewModel: RemotePlaylistsSelectionViewModel
     private weak var coordinator: PlaylistsAndGroupsCoordinating?
     
     private var tableView: UITableView!
@@ -23,7 +23,7 @@ class AddPlaylistsViewController: UIViewController {
     
     private var renderModel: RenderModel?
     
-    init(with viewModel: AddPlaylistsViewModel, coordinator: PlaylistsAndGroupsCoordinating) {
+    init(with viewModel: RemotePlaylistsSelectionViewModel, coordinator: PlaylistsAndGroupsCoordinating) {
         self.viewModel = viewModel
         self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
@@ -36,6 +36,8 @@ class AddPlaylistsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Add", style: .prominent, target: self, action: #selector(didTapAdd))
         
         configureViewModel()
         configureTableView()
@@ -53,7 +55,6 @@ class AddPlaylistsViewController: UIViewController {
                 // TODO: Loading spinner
                 break
             case .loaded(let renderModel):
-                print(renderModel)
                 self?.applySnapshot(renderModel: renderModel)
             case .error:
                 // TODO: Show some UI
@@ -83,14 +84,19 @@ class AddPlaylistsViewController: UIViewController {
     private func configureDataSource() {
         dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
             guard let self else { return UITableViewCell() }
+            
             let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+            cell.selectionStyle = .none
+            
             switch item {
             case .playlist(let id):
                 if let playlist = self.renderModel?.rowsByID[id] {
-                    print("jtj configuring playlist \(playlist.title) with id \(id) row")
+                    print("jtj configuring playlist \(playlist.title) with accessory: \(cell.accessoryType)")
                     let config = PlaylistRowConfiguration(title: playlist.title, artwork: playlist.artwork)
                     cell.contentConfiguration = config
                 }
+                
+                cell.accessoryType = viewModel.isSelected(id) ? .checkmark : .none
                 return cell
             }
         }
@@ -100,7 +106,7 @@ class AddPlaylistsViewController: UIViewController {
         // Update the stored render model reference first so state is consistent
         let oldRender = self.renderModel
         self.renderModel = newRender
-
+        
         // If we have an old render and the items are identical, just reconfigure
         if let oldRender = oldRender, oldRender.items == newRender.items {
             var snapshot = dataSource.snapshot()
@@ -108,16 +114,57 @@ class AddPlaylistsViewController: UIViewController {
             dataSource.apply(snapshot, animatingDifferences: true)
             return
         }
-
+        
         // Otherwise, build a fresh snapshot and apply
         var snapshot = Snapshot()
         snapshot.appendSections([.main])
         snapshot.appendItems(newRender.items)
         print("appending items: \(newRender.items)")
-        dataSource.apply(snapshot, animatingDifferences: false)
+        dataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
+            self?.applyTableSelections(items: newRender.items)
+        }
+    }
+    
+    /// Make table view selections match checkmarks
+    private func applyTableSelections(items: [Item]) {
+        for item in items {
+            guard case .playlist(let id) = item else { continue }
+            guard let indexPath = dataSource.indexPath(for: item) else { continue }
+
+            if viewModel.isSelected(id) {
+                tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
+            } else {
+                tableView.deselectRow(at: indexPath, animated: false)
+            }
+        }
+    }
+    
+    @objc
+    func didTapAdd() {
+        viewModel.saveSelections()
     }
 }
 
-extension AddPlaylistsViewController: UITableViewDelegate {
+extension RemotePlaylistsSelectionViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
+        if case .playlist(let id) = item {
+            viewModel.setSelection(true, for: id)
+            
+            var snapshot = dataSource.snapshot()
+            snapshot.reconfigureItems([item])
+            dataSource.apply(snapshot, animatingDifferences: false)
+        }
+    }
     
+    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
+        if case .playlist(let id) = item {
+            viewModel.setSelection(false, for: id)
+            
+            var snapshot = dataSource.snapshot()
+            snapshot.reconfigureItems([item])
+            dataSource.apply(snapshot, animatingDifferences: false)
+        }
+    }
 }
