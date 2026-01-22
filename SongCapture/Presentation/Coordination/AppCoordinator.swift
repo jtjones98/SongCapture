@@ -8,11 +8,13 @@
 import UIKit
 
 protocol AddSongsCoordinating: AnyObject {
-    func showPlaylistGroups()
+    func showPlaylistsAndGroups()
 }
 
-protocol PlaylistGroupsCoordinating: AnyObject {
-    func showEditGroup()
+protocol PlaylistsAndGroupsCoordinating: AnyObject {
+    func showGroupEditor(id: PlaylistGroupID?)
+    func showRemotePlaylists(service: Service, preselections: Set<PlaylistID>, onSave: @escaping (Set<PlaylistID>, [PlaylistID: Playlist]) -> Void)
+    func dismissGroupEditor()
 }
 
 @MainActor
@@ -22,32 +24,50 @@ final class AppCoordinator {
     
     private let tabBarController = UITabBarController()
     
+    // MARK: - Navigation Controllers
     private let uploadNav = UINavigationController()
     private let listenNav = UINavigationController()
-    private let playlistGroupsNav = UINavigationController()
+    private let playlistsAndGroupsNav = UINavigationController()
+    private let remotePlaylistsNav = UINavigationController()
+    // Maybe a barcode scanning screen? Hmm...
+    
+    // MARK: - Dependencies
+    private let authService: AuthService = AuthServiceImpl()
+    private let appleMusicRemote: MusicRemote = AppleMusicRemote()
+    private let spotifyRemote: MusicRemote = SpotifyRemote()
+    private lazy var repository = RepositoryImpl(auth: authService, appleMusicRemote: appleMusicRemote, spotifyRemote: spotifyRemote)
+    
+    private lazy var loadLibraryUseCase = LoadLibraryUseCaseImpl(repository: repository)
+    private lazy var loadGroupUseCase = LoadGroupUseCaseImpl(repository: repository)
+    private lazy var saveGroupUseCase = SaveGroupUseCaseImpl(repository: repository)
+    private lazy var savePlaylistUseCase = SavePlaylistUseCaseImpl(repository: repository)
+    private lazy var connectServiceUseCase = ConnectServiceUseCaseImpl(repository: repository)
+    private lazy var loadRemoteUseCase = LoadRemoteUseCaseImpl(repository: repository)
     
     private let audioMatcher: AudioMatcher = AudioMatcherImpl()
+    private let imageLoader: ImageLoading = ImageLoader()
     
     init(window: UIWindow) {
         self.window = window
     }
     
     func start() {
+        PlaylistRowContentView.imageLoader = imageLoader // TODO: Rethink this... 
+        
         setupUploadTab()
         setupListenTab()
-        setupPlaylistGroupsTab()
+        setupPlaylistsAndGroupsTab()
         
-        tabBarController.setViewControllers([uploadNav, listenNav, playlistGroupsNav], animated: false)
+        tabBarController.setViewControllers([uploadNav, listenNav, playlistsAndGroupsNav], animated: false)
         tabBarController.selectedIndex = 0
         
-        [uploadNav, listenNav, playlistGroupsNav].forEach { $0.navigationBar.prefersLargeTitles = true }
+        [uploadNav, listenNav, playlistsAndGroupsNav].forEach { $0.navigationBar.prefersLargeTitles = true }
         
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
     }
     
-    // MARK: Tab set up
-    
+    // MARK: Tabs setup
     private func setupUploadTab() {
         let vm = UploadViewModel(with: audioMatcher)
         let vc = UploadViewController(with: vm, coordinator: self)
@@ -66,24 +86,59 @@ final class AppCoordinator {
         listenNav.setViewControllers([vc], animated: false)
     }
     
-    private func setupPlaylistGroupsTab() {
-        let vm = PlaylistGroupsViewModel()
-        let vc = PlaylistGroupsViewController(with: vm, coordinator: self)
-        vc.title = "Playlist Groups"
-        vc.tabBarItem = UITabBarItem(title: "Playlist Groups", image: UIImage(systemName: "rectangle.3.group"), tag: 2)
+    private func setupPlaylistsAndGroupsTab() {
+        let vm = PlaylistsAndGroupsViewModel(loadLibraryUseCase: loadLibraryUseCase)
+        let vc = PlaylistsAndGroupsViewController(with: vm, coordinator: self)
+        vc.title = "Playlists & Groups"
+        vc.tabBarItem = UITabBarItem(title: "Playlists & Groups", image: UIImage(systemName: "rectangle.3.group"), tag: 2)
         
-        playlistGroupsNav.setViewControllers([vc], animated: false)
+        playlistsAndGroupsNav.setViewControllers([vc], animated: false)
     }
 }
 
+// MARK: Add Songs Coordinating
 extension AppCoordinator: AddSongsCoordinating {
-    func showPlaylistGroups() {
-        // TODO: Navigate to playlist groups
+    func showPlaylistsAndGroups() {
+        // TODO: Navigate to playlists and groups
     }
 }
 
-extension AppCoordinator: PlaylistGroupsCoordinating {
-    func showEditGroup() {
-        // TODO: Navigation to edit group
+// MARK: Playlist and Groups Coordinating
+extension AppCoordinator: PlaylistsAndGroupsCoordinating {
+    
+    func showGroupEditor(id: PlaylistGroupID? = nil) {
+        let vm = GroupEditorViewModel(groupID: id, loadGroupUseCase: loadGroupUseCase, saveGroupUseCase: saveGroupUseCase, savePlaylistUseCase: savePlaylistUseCase, connectServiceUseCase: connectServiceUseCase)
+        let vc = GroupEditorViewController(with: vm, coordinator: self)
+        vc.title = "New Group"
+        
+        playlistsAndGroupsNav.pushViewController(vc, animated: true)
+    }
+    
+    func showRemotePlaylists(service: Service, preselections: Set<PlaylistID>, onSave: @escaping (Set<PlaylistID>, [PlaylistID : Playlist]) -> Void) {
+        let vm = RemotePlaylistsSelectionViewModel(service: service, selections: preselections, loadRemoteUseCase: loadRemoteUseCase)
+        let vc = RemotePlaylistsSelectionViewController(with: vm, coordinator: self)
+        
+        vm.onSave = { [weak self] selections, playlistsByID in
+            onSave(selections, playlistsByID)
+            self?.remotePlaylistsNav.dismiss(animated: true)
+        }
+        
+        vc.title = "Playlists"
+        
+        remotePlaylistsNav.setViewControllers([vc], animated: true)
+        remotePlaylistsNav.modalPresentationStyle = .formSheet
+        
+        if let sheet = remotePlaylistsNav.sheetPresentationController {
+            sheet.detents = [.large()]
+            sheet.prefersGrabberVisible = true
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            sheet.selectedDetentIdentifier = .medium
+        }
+        
+        playlistsAndGroupsNav.present(remotePlaylistsNav, animated: true)
+    }
+    
+    func dismissGroupEditor() {
+        playlistsAndGroupsNav.popToRootViewController(animated: true)
     }
 }

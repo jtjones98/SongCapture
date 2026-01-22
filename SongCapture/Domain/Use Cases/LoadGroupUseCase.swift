@@ -1,0 +1,29 @@
+//
+//  LoadGroupUseCase.swift
+//  SongCapture
+//
+//  Created by John Jones on 1/21/26.
+//
+
+protocol LoadGroupUseCase {
+    func fetchGroup(id: PlaylistGroupID) async throws -> PlaylistGroup?
+    func fetchPlaylists(ids: [PlaylistID]) async throws -> [Playlist]
+}
+
+/// Use case for loading a saved group's details
+final class LoadGroupUseCaseImpl: LoadGroupUseCase {
+    
+    private let repository: LibraryRepository
+    
+    init(repository: LibraryRepository) {
+        self.repository = repository
+    }
+
+    func fetchGroup(id: PlaylistGroupID) async throws -> PlaylistGroup? {
+        try await repository.fetchGroup(id: id)
+    }
+    
+    func fetchPlaylists(ids: [PlaylistID]) async throws -> [Playlist] {
+        try await repository.fetchPlaylists(ids: ids)
+    }
+}

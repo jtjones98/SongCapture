@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AFAB513D2F0EC81900406F7E /* ShazamKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFAB513C2F0EC81900406F7E /* ShazamKit.framework */; };
+		AFAB53B52F1ABE4800406F7E /* MusicKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFAB53B42F1ABE4800406F7E /* MusicKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +33,7 @@
 		AFAB511B2F0DE60300406F7E /* SongCaptureTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SongCaptureTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFAB51252F0DE60300406F7E /* SongCaptureUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SongCaptureUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFAB513C2F0EC81900406F7E /* ShazamKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ShazamKit.framework; path = System/Library/Frameworks/ShazamKit.framework; sourceTree = SDKROOT; };
+		AFAB53B42F1ABE4800406F7E /* MusicKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MusicKit.framework; path = System/Library/Frameworks/MusicKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -71,6 +73,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFAB513D2F0EC81900406F7E /* ShazamKit.framework in Frameworks */,
+				AFAB53B52F1ABE4800406F7E /* MusicKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -115,6 +118,7 @@
 		AFAB513B2F0EC81900406F7E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AFAB53B42F1ABE4800406F7E /* MusicKit.framework */,
 				AFAB513C2F0EC81900406F7E /* ShazamKit.framework */,
 			);
 			name = Frameworks;
