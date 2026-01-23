@@ -1,23 +1,44 @@
 //
-//  AuthServiceImpl.swift
+//  MusicAuthRemote.swift
 //  SongCapture
 //
 //  Created by John Jones on 1/20/26.
 //
 import MusicKit
 
-final class AuthServiceImpl: AuthService {
+protocol MusicAuthRemote {
+    func requestAppleMusicAuthorization() async throws
+    func requestSpotifyAuthorization() async throws
+    func isAuthorizedAppleMusic() -> Bool
+    func isAuthorizedSpotify() -> Bool
+}
+
+enum MusicAuthError: Error, CustomDebugStringConvertible {
+    case authorizationDenied
+    case unknown
+    
+    var debugDescription: String {
+        switch self {
+        case .authorizationDenied:
+            return "Authorization was denied or restricted. User needs to enable access in Settings."
+        case .unknown:
+            return "An unknown authorization error occurred."
+        }
+    }
+}
+
+final class MusicAuthRemoteImpl: MusicAuthRemote {
     func requestAppleMusicAuthorization() async throws {
         let authorizationStatus = await MusicAuthorization.request()
         switch authorizationStatus {
         case .authorized:
             break
         case .denied, .restricted:
-            throw AuthError.authorizationDenied
+            throw MusicAuthError.authorizationDenied
         case .notDetermined:
             break
         @unknown default:
-            throw AuthError.unknown
+            throw MusicAuthError.unknown
         }
     }
     
@@ -35,3 +56,4 @@ final class AuthServiceImpl: AuthService {
         return false
     }
 }
+

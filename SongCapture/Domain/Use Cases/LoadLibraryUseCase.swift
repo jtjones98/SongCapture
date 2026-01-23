@@ -5,12 +5,8 @@
 //  Created by John Jones on 1/21/26.
 //
 
-protocol LoadLibraryUseCase {
-    func fetchPlaylistsAndGroups() async throws -> (playlists: [Playlist], groups: [PlaylistGroup])
-}
-
 /// Use case for loading saved playlists and playlist groups
-final class LoadLibraryUseCaseImpl: LoadLibraryUseCase {
+final class LoadLibraryUseCase {
     
     private let repository: LibraryRepository
     

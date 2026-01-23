@@ -32,17 +32,17 @@ final class AppCoordinator {
     // Maybe a barcode scanning screen? Hmm...
     
     // MARK: - Dependencies
-    private let authService: AuthService = AuthServiceImpl()
-    private let appleMusicRemote: MusicRemote = AppleMusicRemote()
-    private let spotifyRemote: MusicRemote = SpotifyRemote()
-    private lazy var repository = RepositoryImpl(auth: authService, appleMusicRemote: appleMusicRemote, spotifyRemote: spotifyRemote)
+    private let musicAuthRemote: MusicAuthRemote = MusicAuthRemoteImpl()
+    private let appleMusicRemote: MusicLibraryRemote = AppleMusicRemote()
+    private let spotifyRemote: MusicLibraryRemote = SpotifyRemote()
+    private lazy var repository = Repository(auth: musicAuthRemote, appleMusicRemote: appleMusicRemote, spotifyRemote: spotifyRemote)
     
-    private lazy var loadLibraryUseCase = LoadLibraryUseCaseImpl(repository: repository)
-    private lazy var loadGroupUseCase = LoadGroupUseCaseImpl(repository: repository)
-    private lazy var saveGroupUseCase = SaveGroupUseCaseImpl(repository: repository)
-    private lazy var savePlaylistUseCase = SavePlaylistUseCaseImpl(repository: repository)
-    private lazy var connectServiceUseCase = ConnectServiceUseCaseImpl(repository: repository)
-    private lazy var loadRemoteUseCase = LoadRemoteUseCaseImpl(repository: repository)
+    private lazy var loadLibraryUseCase = LoadLibraryUseCase(repository: repository)
+    private lazy var loadGroupUseCase = LoadGroupUseCase(repository: repository)
+    private lazy var saveGroupUseCase = SaveGroupUseCase(repository: repository)
+    private lazy var savePlaylistUseCase = SavePlaylistUseCase(repository: repository)
+    private lazy var connectServiceUseCase = ConnectServiceUseCase(repository: repository)
+    private lazy var loadRemoteUseCase = LoadRemoteUseCase(repository: repository)
     
     private let audioMatcher: AudioMatcher = AudioMatcherImpl()
     private let imageLoader: ImageLoading = ImageLoader()
