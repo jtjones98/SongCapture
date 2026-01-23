@@ -5,19 +5,14 @@
 //  Created by John Jones on 1/7/26.
 //
 
+import Combine
 import Foundation
 
 final class PlaylistsAndGroupsViewModel {
     
     private let loadLibraryUseCase: LoadLibraryUseCase
-        
-    private var state: PlaylistsAndGroupsViewState = .idle {
-        didSet { onStateChange?(state) }
-    }
-    
-    var onStateChange: ((PlaylistsAndGroupsViewState) -> Void)?
-
     private var loadPlaylistsAndGroupsTask: Task<Void, Never>?
+    @Published private(set) var state: PlaylistsAndGroupsViewState = .idle
     
     init(loadLibraryUseCase: LoadLibraryUseCase) {
         self.loadLibraryUseCase = loadLibraryUseCase
@@ -87,6 +82,7 @@ extension PlaylistsAndGroupsViewModel {
         case idle
         case loading
         case loaded(RenderModel)
+        // TODO: Error state
     }
     
     struct RenderModel {

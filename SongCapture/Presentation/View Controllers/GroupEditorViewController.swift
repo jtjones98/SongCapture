@@ -5,6 +5,7 @@
 //  Created by John Jones on 1/9/26.
 //
 
+import Combine
 import UIKit
 
 fileprivate typealias Section = GroupEditorViewModel.Section
@@ -19,6 +20,8 @@ class GroupEditorViewController: UIViewController {
     
     private var tableView: UITableView!
     private var dataSource: DataSource!
+    
+    private var cancellables: Set<AnyCancellable> = []
     
     init(with viewModel: GroupEditorViewModel, coordinator: PlaylistsAndGroupsCoordinating) {
         self.viewModel = viewModel
@@ -50,23 +53,25 @@ class GroupEditorViewController: UIViewController {
     }
     
     private func configureViewModel() {
-        viewModel.onStateChange = { [weak self] state in
-            switch state {
-            case .idle:
-                break
-            case .loading:
-                // TODO: loading
-                break
-            case .loaded(let renderModel):
-                // TODO: handle dictionary or something
-                self?.applySnapshot(render: renderModel)
-            case .error(let error):
-                switch error {
-                case .authFailure(let title, let body, let action):
-                    self?.presentAuthFailureAlert(title: title, message: body, actionTitle: action)
+        viewModel.$state
+            .sink { [weak self] state in
+                switch state {
+                case .idle:
+                    break
+                case .loading:
+                    // TODO: loading
+                    break
+                case .loaded(let renderModel):
+                    // TODO: handle dictionary or something
+                    self?.applySnapshot(render: renderModel)
+                case .error(let error):
+                    switch error {
+                    case .authFailure(let title, let body, let action):
+                        self?.presentAuthFailureAlert(title: title, message: body, actionTitle: action)
+                    }
                 }
             }
-        }
+            .store(in: &cancellables)
         
         viewModel.onAddPlaylists = { [weak self] args in
             self?.coordinator?.showRemotePlaylists(service: args.service, preselections: args.preselections, onSave: { [weak self] ids, playlistByIDs in

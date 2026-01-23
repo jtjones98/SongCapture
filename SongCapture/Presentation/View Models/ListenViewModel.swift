@@ -5,6 +5,7 @@
 //  Created by John Jones on 1/7/26.
 //
 
+import Combine
 import Foundation
 
 final class ListenViewModel: NSObject {
@@ -33,11 +34,7 @@ final class ListenViewModel: NSObject {
         }
     }
     
-    var onStateChanged: ((ListenViewState) -> Void)?
-    
-    private var state: ListenViewState = .idle {
-        didSet { onStateChanged?(state) }
-    }
+    @Published private(set) var state: ListenViewState = .idle
     
     private var matcher: AudioMatcher
     
