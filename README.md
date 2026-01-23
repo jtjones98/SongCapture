@@ -58,7 +58,7 @@ Current architecture involves the following:
     - LibraryRepository - Conforming type should save and fetch saved playlists and playlist groups 
     - MusicRemoteRepository - Conforming type should provide playlists from remote music service
     - MusicAuthRepository - Conforming type should fetch music service authorization status and request authorization
-  - Use Cases protocols & Impls
+  - Use Cases
     - LoadLibraryUseCase - Depended on by PlaylistsAndGroupsVM/VC to show user's saved playlists and playlist groups. Depends on LibraryRepository
     - ConnectServiceUseCase - Depended on by GroupEditorVM/VC to connect to user's music service. Depends on MusicAuthRepository
     - LoadGroupUseCase - Depended on by GroupEditorVM/VC to load a user's saved playlist group details. Depends on LibraryRepository
@@ -78,7 +78,8 @@ Current architecture involves the following:
 - Edit group titles
 - Pagination for remote playlists
     - Caching
-- Disk storage 
+- Disk storage
+- Replace selection closures with selection store 
   
 ### Next Up
 #### Song Matching Flow
