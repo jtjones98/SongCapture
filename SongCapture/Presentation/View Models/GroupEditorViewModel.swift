@@ -5,6 +5,7 @@
 //  Created by John Jones on 1/11/26.
 //
 
+import Combine
 import Foundation
 import MusicKit
 
@@ -20,12 +21,9 @@ final class GroupEditorViewModel {
     private var draftGroup: PlaylistGroup = PlaylistGroup(id: PlaylistGroupID(), name: "", playlistIDs: [])
     private var authStatusByService: [Service: Bool] = [:]
     private var playlistsByService: [Service: [Playlist]] = [:]
-        
-    private var state: ViewState = .idle {
-        didSet { onStateChange?(state) }
-    }
     
-    var onStateChange: ((ViewState) -> Void)?
+    @Published private(set) var state: ViewState = .idle
+
     var onAddPlaylists: (((service: Service, preselections: Set<PlaylistID>)) -> Void)?
     
     private var loadAuthAndPlaylistsTask: Task<Void, Never>?

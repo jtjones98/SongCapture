@@ -5,6 +5,7 @@
 //  Created by John Jones on 1/12/26.
 //
 
+import Combine
 import Foundation
 import MusicKit
 
@@ -16,11 +17,8 @@ final class RemotePlaylistsSelectionViewModel {
     private var draftSelections: Set<PlaylistID> = []
     private var playlistsByID: [PlaylistID: Playlist] = [:]
     
-    private var state: ViewState = .idle {
-        didSet { onStateChange?(state) }
-    }
-    
-    var onStateChange: ((ViewState) -> Void)?
+    @Published private(set) var state: ViewState = .idle
+
     var onSave: ((Set<PlaylistID>, [PlaylistID: Playlist]) -> Void)?
     
     private var fetchPlaylistsTask: Task<Void, Never>?

@@ -5,6 +5,7 @@
 //  Created by John Jones on 1/7/26.
 //
 
+import Combine
 import UIKit
 
 fileprivate typealias Section = PlaylistsAndGroupsViewModel.Section
@@ -14,12 +15,14 @@ fileprivate typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
 fileprivate typealias RenderModel = PlaylistsAndGroupsViewModel.RenderModel
 
 final class PlaylistsAndGroupsViewController: UIViewController {
-    private var collectionView: UICollectionView!
-    
-    private var dataSource: DataSource!
     
     private var viewModel: PlaylistsAndGroupsViewModel
     private weak var coordinator: PlaylistsAndGroupsCoordinating?
+    
+    private var collectionView: UICollectionView!
+    private var dataSource: DataSource!
+    
+    private var cancellables = Set<AnyCancellable>()
     
     init(with viewModel: PlaylistsAndGroupsViewModel, coordinator: PlaylistsAndGroupsCoordinating) {
         self.viewModel = viewModel
@@ -46,16 +49,19 @@ final class PlaylistsAndGroupsViewController: UIViewController {
     }
     
     private func configureViewModel() {
-        viewModel.onStateChange = { [weak self] state in
-            switch state {
-            case .idle:
-                break
-            case .loading:
-                break
-            case .loaded(let render):
-                self?.applySnapshot(render: render)
+        viewModel.$state
+            .sink { [weak self] state in
+                guard let self else { return }
+                switch state {
+                case .idle:
+                    break
+                case .loading:
+                    break // TODO: Show spinner
+                case .loaded(let render):
+                    self.applySnapshot(render: render)
+                }
             }
-        }
+            .store(in: &cancellables)
     }
     
     // MARK: CollectionView Config

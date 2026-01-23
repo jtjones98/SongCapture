@@ -5,12 +5,15 @@
 //  Created by John Jones on 1/6/26.
 //
 
+import Combine
 import UIKit
 
 class ListenViewController: UIViewController {
     
     private var viewModel: ListenViewModel
     private weak var coordinator: AddSongsCoordinating?
+    
+    private var cancellables: Set<AnyCancellable> = []
 
     private var recordButton: UIButton!
     
@@ -26,8 +29,8 @@ class ListenViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupViewModel()
         setupUI()
+        setupViewModel()
     }
     
     override func viewDidLayoutSubviews() {
@@ -37,32 +40,35 @@ class ListenViewController: UIViewController {
     }
     
     private func setupViewModel() {
-        viewModel.onStateChanged = { [weak self] state in
-            switch state {
-            case .idle:
-                self?.stopPulsingRecordButton()
-                self?.recordButton.isEnabled = true
-            case .listening:
-                self?.startPulsingRecordButton()
-                self?.recordButton.isEnabled = false
-            case .listened(let track):
-                self?.stopPulsingRecordButton()
-                self?.recordButton.isEnabled = true
-                print(track)
-            case .failed(let error):
-                self?.stopPulsingRecordButton()
-                self?.recordButton.isEnabled = true
-                switch error {
-                case .noMatchFound(let message):
-                    self?.setupUnsuccessfulUI(message)
-                case .permissionNotGranted(let title, let message, let settingsAction, let cancelAction):
-                    self?.showPermissionsNeededAlert(title, message, settingsAction, cancelAction)
-                case .engineError(let message):
-                    self?.setupUnsuccessfulUI(message)
-                    break
+        viewModel.$state
+            .sink { [weak self] state in
+                guard let self else { return }
+                switch state {
+                case .idle:
+                    self.stopPulsingRecordButton()
+                    self.recordButton.isEnabled = true
+                case .listening:
+                    self.startPulsingRecordButton()
+                    self.recordButton.isEnabled = false
+                case .listened(let track):
+                    self.stopPulsingRecordButton()
+                    self.recordButton.isEnabled = true
+                    print(track)
+                case .failed(let error):
+                    self.stopPulsingRecordButton()
+                    self.recordButton.isEnabled = true
+                    switch error {
+                    case .noMatchFound(let message):
+                        self.setupUnsuccessfulUI(message)
+                    case .permissionNotGranted(let title, let message, let settingsAction, let cancelAction):
+                        self.showPermissionsNeededAlert(title, message, settingsAction, cancelAction)
+                    case .engineError(let message):
+                        self.setupUnsuccessfulUI(message)
+                        break
+                    }
                 }
             }
-        }
+            .store(in: &cancellables)
     }
 
     private func setupUI() {

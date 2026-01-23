@@ -5,6 +5,7 @@
 //  Created by John Jones on 1/12/26.
 //
 
+import Combine
 import UIKit
 
 fileprivate typealias Section = RemotePlaylistsSelectionViewModel.Section
@@ -20,6 +21,8 @@ class RemotePlaylistsSelectionViewController: UIViewController {
     
     private var tableView: UITableView!
     private var dataSource: DataSource!
+    
+    private var cancellables: Set<AnyCancellable> = []
     
     private var renderModel: RenderModel?
     
@@ -47,20 +50,22 @@ class RemotePlaylistsSelectionViewController: UIViewController {
     }
     
     private func configureViewModel() {
-        viewModel.onStateChange = { [weak self] state in
-            switch state {
-            case .idle:
-                break
-            case .loading:
-                // TODO: Loading spinner
-                break
-            case .loaded(let renderModel):
-                self?.applySnapshot(renderModel: renderModel)
-            case .error:
-                // TODO: Show some UI
-                break
+        viewModel.$state
+            .sink { [weak self] state in
+                switch state {
+                case .idle:
+                    break
+                case .loading:
+                    // TODO: Loading spinner
+                    break
+                case .loaded(let renderModel):
+                    self?.applySnapshot(renderModel: renderModel)
+                case .error:
+                    // TODO: Show some UI
+                    break
+                }
             }
-        }
+            .store(in: &cancellables)
     }
     
     private func configureTableView() {
