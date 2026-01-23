@@ -5,17 +5,12 @@
 //  Created by John Jones on 1/21/26.
 //
 
-protocol ConnectServiceUseCase {
-    func checkAuthorization(for service: Service) async throws -> Bool
-    func requestAuthorization(for service: Service) async throws
-}
-
 /// Use case for connecting a streaming service.
-final class ConnectServiceUseCaseImpl: ConnectServiceUseCase {
+final class ConnectServiceUseCase {
     
-    private let repository: ServiceAuthRepository
+    private let repository: MusicAuthRepository
     
-    init(repository: ServiceAuthRepository) {
+    init(repository: MusicAuthRepository) {
         self.repository = repository
     }
     

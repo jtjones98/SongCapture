@@ -5,16 +5,12 @@
 //  Created by John Jones on 1/21/26.
 //
 
-protocol LoadRemoteUseCase {
-    func fetchPlaylists(from service: Service) async throws -> [Playlist]
-}
-
 /// Use case for loading user's playlists from a service
-final class LoadRemoteUseCaseImpl: LoadRemoteUseCase {
+final class LoadRemoteUseCase {
     
-    private let repository: RemoteRepository
+    private let repository: MusicRemoteRepository
     
-    init(repository: RemoteRepository) {
+    init(repository: MusicRemoteRepository) {
         self.repository = repository
     }
     

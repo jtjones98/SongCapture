@@ -5,16 +5,16 @@
 //  Created by John Jones on 1/15/26.
 //
 
-final class RepositoryImpl {
+final class Repository {
     
-    private let auth: AuthService
-    private let appleMusicRemote: MusicRemote
-    private let spotifyRemote: MusicRemote
+    private let auth: MusicAuthRemote
+    private let appleMusicRemote: MusicLibraryRemote
+    private let spotifyRemote: MusicLibraryRemote
     
     var playlists: [PlaylistID: Playlist] = [:] // TODO: Implement disk storage
     var groups: [PlaylistGroupID: PlaylistGroup] = [:]
     
-    init(auth: AuthService, appleMusicRemote: MusicRemote, spotifyRemote: MusicRemote) {
+    init(auth: MusicAuthRemote, appleMusicRemote: MusicLibraryRemote, spotifyRemote: MusicLibraryRemote) {
         self.auth = auth
         self.appleMusicRemote = appleMusicRemote
         self.spotifyRemote = spotifyRemote
@@ -22,7 +22,7 @@ final class RepositoryImpl {
 }
 
 // MARK: - Library
-extension RepositoryImpl: LibraryRepository {
+extension Repository: LibraryRepository {
     func fetchPlaylistsAndGroups() async throws -> (playlists: [Playlist], groups: [PlaylistGroup]) {
         let playlists = playlists.values.map { $0 } // TODO: Implement some sort of sorting
         let groups = groups.values.map { $0 }
@@ -51,7 +51,7 @@ extension RepositoryImpl: LibraryRepository {
 }
 
 // MARK: - Remote
-extension RepositoryImpl: RemoteRepository {
+extension Repository: MusicRemoteRepository {
     func fetchPlaylists(from service: Service) async throws -> [Playlist] {
         switch service {
         case .appleMusic:
@@ -63,7 +63,7 @@ extension RepositoryImpl: RemoteRepository {
 }
 
 // MARK: - Service Authentication
-extension RepositoryImpl: ServiceAuthRepository {
+extension Repository: MusicAuthRepository {
     func checkAuthorization(for service: Service) async throws -> Bool {
         switch service {
         case .appleMusic:

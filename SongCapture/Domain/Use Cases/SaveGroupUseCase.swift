@@ -5,12 +5,8 @@
 //  Created by John Jones on 1/21/26.
 //
 
-protocol SaveGroupUseCase {
-    func savePlaylistGroup(_ group: PlaylistGroup) async throws
-}
-
 /// Use case for saving a playlist group
-final class SaveGroupUseCaseImpl: SaveGroupUseCase {
+final class SaveGroupUseCase {
     
     private let repository: LibraryRepository
     

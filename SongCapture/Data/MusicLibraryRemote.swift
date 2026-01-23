@@ -1,13 +1,16 @@
 //
-//  AppleMusicRemote.swift
+//  MusicLibraryRemote.swift
 //  SongCapture
 //
 //  Created by John Jones on 1/20/26.
 //
-
 import MusicKit
 
-final class AppleMusicRemote: MusicRemote {
+protocol MusicLibraryRemote {
+    func fetchPlaylists() async throws -> [Playlist]
+}
+
+final class AppleMusicRemote: MusicLibraryRemote {
     func fetchPlaylists() async throws -> [Playlist] {
         var request = MusicLibraryRequest<MusicKit.Playlist>()
         request.sort(by: \.name, ascending: true)
@@ -29,5 +32,12 @@ final class AppleMusicRemote: MusicRemote {
                 artwork: artwork,
             )
         }
+    }
+}
+
+final class SpotifyRemote: MusicLibraryRemote {
+    func fetchPlaylists() async throws -> [Playlist] {
+        // TODO: - Fetch Spotify playlists
+        []
     }
 }

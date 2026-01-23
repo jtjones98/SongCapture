@@ -1,10 +1,10 @@
 //
-//  RemoteRepository.swift
+//  MusicRemoteRepository.swift
 //  SongCapture
 //
 //  Created by John Jones on 1/21/26.
 //
 
-protocol RemoteRepository {
+protocol MusicRemoteRepository {
     func fetchPlaylists(from service: Service) async throws -> [Playlist]
 }

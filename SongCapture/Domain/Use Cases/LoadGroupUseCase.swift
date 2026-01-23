@@ -5,13 +5,8 @@
 //  Created by John Jones on 1/21/26.
 //
 
-protocol LoadGroupUseCase {
-    func fetchGroup(id: PlaylistGroupID) async throws -> PlaylistGroup?
-    func fetchPlaylists(ids: [PlaylistID]) async throws -> [Playlist]
-}
-
 /// Use case for loading a saved group's details
-final class LoadGroupUseCaseImpl: LoadGroupUseCase {
+final class LoadGroupUseCase {
     
     private let repository: LibraryRepository
     
