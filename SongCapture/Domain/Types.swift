@@ -13,6 +13,12 @@ enum Service: Hashable {
     case spotify
 }
 
+struct PlaylistSnapshot: Equatable {
+    let orderedIDs: [PlaylistID]
+    let byID: [PlaylistID: Playlist]
+    let canLoadMore: Bool
+}
+
 struct Playlist: Hashable, Equatable {
     let id: PlaylistID
     let name: String

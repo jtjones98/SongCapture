@@ -14,7 +14,15 @@ final class LoadRemoteUseCase {
         self.repository = repository
     }
     
-    func fetchPlaylists(from service: Service) async throws -> [Playlist] {
-        try await repository.fetchPlaylists(from: service)
+    func reset(service: Service) async {
+        await repository.resetPlaylists(for: service)
+    }
+    
+    func loadMore(service: Service) async throws {
+        try await repository.loadMorePlaylists(for: service)
+    }
+    
+    func currentSnapshot(service: Service) async -> PlaylistSnapshot {
+        await repository.currentPlaylists(for: service)
     }
 }

@@ -46,7 +46,7 @@ class RemotePlaylistsSelectionViewController: UIViewController {
         configureTableView()
         configureDataSource()
         
-        viewModel.fetchPlaylists()
+        viewModel.fetchFirstPage()
     }
     
     private func configureViewModel() {
@@ -171,5 +171,10 @@ extension RemotePlaylistsSelectionViewController: UITableViewDelegate {
             snapshot.reconfigureItems([item])
             dataSource.apply(snapshot, animatingDifferences: false)
         }
+    }
+    
+    // TODO: UITableViewDataSourcePrefetching
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        viewModel.fetchNextPageIfNeeded(currentIndex: indexPath.row)
     }
 }

@@ -6,5 +6,7 @@
 //
 
 protocol MusicRemoteRepository {
-    func fetchPlaylists(from service: Service) async throws -> [Playlist]
+    func resetPlaylists(for service: Service) async
+    func loadMorePlaylists(for service: Service) async throws
+    func currentPlaylists(for service: Service) async -> PlaylistSnapshot
 }
