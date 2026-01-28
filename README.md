@@ -76,7 +76,7 @@ Current architecture involves the following:
 ### Current Work
 #### Playlists/Playlist Groups Flow cont.
 - Edit group titles
-- Pagination for remote playlists
+- Pagination for remote playlists [[PR](https://github.com/jtjones98/SongCapture/pull/7)]
     - Caching
 - Disk storage
 - Replace selection closures with selection store 
