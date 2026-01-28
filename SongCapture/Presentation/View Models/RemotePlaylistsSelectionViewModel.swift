@@ -21,7 +21,10 @@ final class RemotePlaylistsSelectionViewModel {
 
     var onSave: ((Set<PlaylistID>, [PlaylistID: Playlist]) -> Void)?
     
-    private var fetchPlaylistsTask: Task<Void, Never>?
+    private var initialLoadTask: Task<Void, Never>?
+    private var paginationTask: Task<Void, Never>?
+    private var canLoadMore = true
+    private var isPageLoading = false
     
     init(service: Service, selections: Set<PlaylistID>, loadRemoteUseCase: LoadRemoteUseCase) {
         self.service = service
@@ -29,22 +32,52 @@ final class RemotePlaylistsSelectionViewModel {
         self.draftSelections = selections
     }
     
-    func fetchPlaylists() {
+    func fetchFirstPage() {
         state = .loading
+        isPageLoading = true
         
-        fetchPlaylistsTask?.cancel()
-        
-        fetchPlaylistsTask = Task { [weak self] in
+        initialLoadTask = Task { [weak self] in
             guard let self else { return }
+            defer { self.isPageLoading = false }
+            
+            await loadRemoteUseCase.reset(service: service)
             
             do {
-                let playlists = try await loadRemoteUseCase.fetchPlaylists(from: service)
-                self.playlistsByID = playlists.reduce(into: [:]) { $0[$1.id] = $1 }
+                try await loadRemoteUseCase.loadMore(service: service)
+                let snapshot = await loadRemoteUseCase.currentSnapshot(service: service)
+                self.canLoadMore = snapshot.canLoadMore
+                self.playlistsByID = snapshot.byID
                 await MainActor.run {
-                    self.state = .loaded(self.makeRenderModel(from: playlists))
+                    self.state = .loaded(self.makeRenderModel(orderedIDs: snapshot.orderedIDs, playlistsByID: self.playlistsByID))
                 }
             } catch {
-                // TODO: Handle loading remote playlists error
+                await MainActor.run {
+                    self.state = .error
+                }
+            }
+        }
+    }
+        
+    func fetchNextPageIfNeeded(currentIndex: Int, threshold: Int = 10) {
+        guard canLoadMore, !isPageLoading else { return }
+        guard case .loaded(let render) = state else { return }
+        guard currentIndex >= render.items.count - threshold else { return }
+        
+        isPageLoading = true
+        paginationTask = Task { [weak self] in
+            guard let self else { return }
+            defer { self.isPageLoading = false }
+            
+            do {
+                try await loadRemoteUseCase.loadMore(service: service)
+                let snapshot = await loadRemoteUseCase.currentSnapshot(service: service)
+                self.canLoadMore = snapshot.canLoadMore
+                self.playlistsByID = snapshot.byID
+                await MainActor.run {
+                    self.state = .loaded(self.makeRenderModel(orderedIDs: snapshot.orderedIDs, playlistsByID: self.playlistsByID))
+                }
+            } catch {
+                self.state = .error
             }
         }
     }
@@ -67,26 +100,18 @@ final class RemotePlaylistsSelectionViewModel {
     }
     
     deinit {
-        fetchPlaylistsTask?.cancel()
+        initialLoadTask?.cancel()
     }
 }
 
 private extension RemotePlaylistsSelectionViewModel {
-    func makeRenderModel(from playlists: [Playlist]) -> RenderModel {
-        // Make the row ID the playlist's unique ID
-        let ids = playlists.map(\.id)
-        
-        // Create dictionary mapping ids to cell presentation data
-        let rowsByID: [PlaylistID: PlaylistRowVM] = playlists.reduce(into: [:]) { res, playlist in
-            res[playlist.id] = PlaylistRowVM(
-                id: playlist.id,
-                title: playlist.name,
-                subtitle: playlist.id.service.title,
-                artwork: playlist.artwork,
-                selected: draftSelections.contains(playlist.id) // May be unneccessary, future proofing in case we end up calling to makeRenderModel multiple times while on this screen. Right now, its called once when we first loads.
-            )
+    func makeRenderModel(orderedIDs: [PlaylistID], playlistsByID: [PlaylistID: Playlist]) -> RenderModel {
+        let rowsByID: [PlaylistID: PlaylistRowVM] = orderedIDs.reduce(into: [:]) { res, id in
+            guard let playlist = playlistsByID[id] else { return }
+            res[id] = PlaylistRowVM(id: id, title: playlist.name, subtitle: "", artwork: playlist.artwork, selected: draftSelections.contains(id))
         }
-        return RenderModel(items: ids.map { Item.playlist($0) }, rowsByID: rowsByID)
+        
+        return RenderModel(items: orderedIDs.map { .playlist($0) }, rowsByID: rowsByID)
     }
 }
 

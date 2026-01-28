@@ -35,7 +35,8 @@ final class AppCoordinator {
     private let musicAuthRemote: MusicAuthRemote = MusicAuthRemoteImpl()
     private let appleMusicRemote: MusicLibraryRemote = AppleMusicRemote()
     private let spotifyRemote: MusicLibraryRemote = SpotifyRemote()
-    private lazy var repository = Repository(auth: musicAuthRemote, appleMusicRemote: appleMusicRemote, spotifyRemote: spotifyRemote)
+    private let appleMusicCache: RemotePlaylistCache = RemotePlaylistCache()
+    private lazy var repository = Repository(auth: musicAuthRemote, appleMusicRemote: appleMusicRemote, appleMusicCache: appleMusicCache, spotifyRemote: spotifyRemote)
     
     private lazy var loadLibraryUseCase = LoadLibraryUseCase(repository: repository)
     private lazy var loadGroupUseCase = LoadGroupUseCase(repository: repository)

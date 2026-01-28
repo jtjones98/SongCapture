@@ -62,7 +62,7 @@ final class UploadViewController: UIViewController {
         uploadButton.addTarget(self, action: #selector(uploadTapped), for: .touchUpInside)
 
         uploadButton.configurationUpdateHandler = { [weak self] button in
-            guard let self = self else { return }
+            guard let self else { return }
             UIView.animate(withDuration: 0.15) {
                 button.transform = button.isHighlighted ? CGAffineTransform(scaleX: 0.97, y: 0.97) : .identity
             }

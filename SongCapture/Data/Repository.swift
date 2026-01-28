@@ -9,14 +9,18 @@ final class Repository {
     
     private let auth: MusicAuthRemote
     private let appleMusicRemote: MusicLibraryRemote
+    private let appleMusicCache: RemotePlaylistCache
     private let spotifyRemote: MusicLibraryRemote
+    
+    private let pageSize = 25
     
     var playlists: [PlaylistID: Playlist] = [:] // TODO: Implement disk storage
     var groups: [PlaylistGroupID: PlaylistGroup] = [:]
     
-    init(auth: MusicAuthRemote, appleMusicRemote: MusicLibraryRemote, spotifyRemote: MusicLibraryRemote) {
+    init(auth: MusicAuthRemote, appleMusicRemote: MusicLibraryRemote, appleMusicCache: RemotePlaylistCache, spotifyRemote: MusicLibraryRemote) {
         self.auth = auth
         self.appleMusicRemote = appleMusicRemote
+        self.appleMusicCache = appleMusicCache
         self.spotifyRemote = spotifyRemote
     }
 }
@@ -52,13 +56,53 @@ extension Repository: LibraryRepository {
 
 // MARK: - Remote
 extension Repository: MusicRemoteRepository {
-    func fetchPlaylists(from service: Service) async throws -> [Playlist] {
+    func resetPlaylists(for service: Service) async {
         switch service {
         case .appleMusic:
-            try await appleMusicRemote.fetchPlaylists()
+            await appleMusicCache.reset()
         case .spotify:
-            [] // TODO: fetch spotify playlists
+            break // TODO: reset spotify cache
         }
+    }
+    
+    func loadMorePlaylists(for service: Service) async throws {
+        switch service {
+        case .appleMusic:
+            try await loadMoreAppleMusicPlaylists()
+        case .spotify:
+            break
+            // TODO: load more spotify playlists
+        }
+    }
+    
+    func currentPlaylists(for service: Service) async -> PlaylistSnapshot {
+        switch service {
+        case .appleMusic:
+            return await appleMusicCache.currentSnapshot()
+        case .spotify:
+            // TODO: Get current spotify playlists
+            return PlaylistSnapshot(orderedIDs: [], byID: [:], canLoadMore: false)
+        }
+    }
+    
+    private func loadMoreAppleMusicPlaylists() async throws {
+        if await appleMusicCache.isLoading { return }
+        if await appleMusicCache.canLoadMore == false { return }
+        
+        await appleMusicCache.setLoading(true)
+        defer { Task { await self.appleMusicCache.setLoading(false) }}
+        
+        let token = await appleMusicCache.nextToken
+        
+        let page: PlaylistPage
+        let isEmpty = await appleMusicCache.orderedIDs.isEmpty
+        if token == nil && isEmpty {
+            page = try await appleMusicRemote.fetchFirstPlaylistPage(limit: pageSize)
+        } else {
+            page = try await appleMusicRemote.fetchNextPlaylistPage(limit: pageSize, nextToken: token)
+        }
+        
+        await appleMusicCache.merge(page: page)
     }
 }
 
